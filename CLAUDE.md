@@ -61,6 +61,7 @@ src/
 
 - **No ORM.** Use raw SQL via `pg`. Schema lives in `schema.sql` at project root.
 - **Server Actions** for mutations (post creation, profile update). Route Handlers for read APIs.
+- **Mutations return `{ error?: string }`, they don't throw** (except `redirect()`). Client components surface the error inline and only reset/clear on success. See `register` and `createPost`. The one exception: `redirect()` must throw, so call it after the try/catch.
 - **One DB pool.** `src/lib/db.ts` exports a single `Pool` — never instantiate `Pool` elsewhere.
 - **Env vars only through `process.env`.** Never import dotenv in production code — Next.js handles it.
 - **Error handling:** always return typed error responses `{ error: string }` with correct HTTP status.
