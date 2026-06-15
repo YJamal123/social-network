@@ -111,6 +111,11 @@ These are **never in the repo**. Set in Secret Manager and wired to Cloud Run.
 | `NEXTAUTH_SECRET` | Random 32-byte secret |
 | `NEXTAUTH_URL` | Full public HTTPS URL of the Cloud Run service |
 
+## Gotchas (learned the hard way)
+
+- **`db.ts` must lazy-init the Pool.** The `DATABASE_URL` check and `new Pool()` happen on first `query()` call, NOT at module import. A module-level throw fails `next build`, which imports route modules without a live DB.
+- **Schema is applied via `/api/migrate`, not a local `psql`.** The Cloud SQL instance is private-IP only (org policy blocks public IP), so it's unreachable from a laptop. The migrate route inlines the core SQL (the standalone Docker bundle doesn't ship root files like `schema.sql`, so a disk read would break in prod). Hit it once post-deploy from inside the VPC: `curl -X POST "https://<url>/api/migrate?token=$NEXTAUTH_SECRET"`.
+
 ## Never Do This
 
 - **No secrets in the repo.** The repo is public. Use Secret Manager. `.env*` is in `.gitignore`.
