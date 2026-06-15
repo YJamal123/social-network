@@ -1,0 +1,47 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Next.js
+/.next/
+/out/
+
+# Production build
+/build
+
+# Testing
+/coverage
+
+# Environment variables — NEVER commit these (repo is public)
+.env
+.env.local
+.env*.local
+.env.*
+
+# GCP service account keys — NEVER commit these
+*-service-account*.json
+*-key.json
+service-account.json
+credentials.json
+
+# Misc
+.DS_Store
+*.pem
+Thumbs.db
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
