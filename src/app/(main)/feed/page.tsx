@@ -1,6 +1,7 @@
 import { auth, signOut } from "@/lib/auth"
+import { PostForm } from "@/components/PostForm"
 
-// Placeholder — replaced with the real feed in Phase 4.
+// Post composer is live (Phase 3). The post list lands in Phase 4.
 export default async function FeedPage() {
   const session = await auth()
 
@@ -17,8 +18,11 @@ export default async function FeedPage() {
           <button className="text-sm text-gray-500 hover:underline">Sign out</button>
         </form>
       </div>
+
+      <PostForm />
+
       <p className="text-gray-600">
-        Signed in as <strong>{session?.user?.name}</strong>. Feed coming in Phase 4.
+        Signed in as <strong>{session?.user?.name}</strong>. Post list coming in Phase 4.
       </p>
     </main>
   )
