@@ -23,14 +23,14 @@ export default function RegisterPage() {
           name="username"
           placeholder="Username"
           required
-          className="w-full rounded border border-gray-300 p-2"
+          className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500"
         />
         <input
           name="email"
           type="email"
           placeholder="Email"
           required
-          className="w-full rounded border border-gray-300 p-2"
+          className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500"
         />
         <input
           name="password"
@@ -38,7 +38,7 @@ export default function RegisterPage() {
           placeholder="Password (min 6 chars)"
           required
           minLength={6}
-          className="w-full rounded border border-gray-300 p-2"
+          className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500"
         />
 
         <button

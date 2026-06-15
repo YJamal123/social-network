@@ -2,16 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme only. The app uses light surfaces (bg-white cards), so we don't
+   flip to a dark foreground under prefers-color-scheme: dark — that turned the
+   inherited input text near-white and made it invisible on the white forms. */
 :root {
-  --background: #ffffff;
+  --background: #f3f4f6;
   --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

@@ -47,14 +47,14 @@ export default function LoginPage() {
           type="email"
           placeholder="Email"
           required
-          className="w-full rounded border border-gray-300 p-2"
+          className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500"
         />
         <input
           name="password"
           type="password"
           placeholder="Password"
           required
-          className="w-full rounded border border-gray-300 p-2"
+          className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500"
         />
 
         <button

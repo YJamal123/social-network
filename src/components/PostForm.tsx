@@ -39,7 +39,7 @@ export function PostForm() {
         rows={3}
         required
         placeholder="What's on your mind?"
-        className="w-full resize-none rounded border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full resize-none rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
 
       {error && <p className="text-sm text-red-600">{error}</p>}
