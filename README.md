@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SML Social Network
 
-## Getting Started
+A minimal social network built with Next.js 14 (App Router), deployed on Google Cloud Run with Cloud SQL (PostgreSQL).
 
-First, run the development server:
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Set `DATABASE_URL` and `NEXTAUTH_SECRET` in a local `.env.local` file (never commit this).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy to Cloud Run
 
-## Learn More
+```bash
+# Build and push image to Artifact Registry
+docker build -t us-central1-docker.pkg.dev/sml-interview-sandbox/mdjamal-registry/mdjamal-app:v1 .
+docker push us-central1-docker.pkg.dev/sml-interview-sandbox/mdjamal-registry/mdjamal-app:v1
 
-To learn more about Next.js, take a look at the following resources:
+# Deploy
+gcloud run deploy mdjamal-app \
+  --image=us-central1-docker.pkg.dev/sml-interview-sandbox/mdjamal-registry/mdjamal-app:v1 \
+  --platform=managed \
+  --region=us-central1 \
+  --project=sml-interview-sandbox \
+  --allow-unauthenticated \
+  --set-secrets=DATABASE_URL=mdjamal-db-url:latest,NEXTAUTH_SECRET=mdjamal-nextauth-secret:latest \
+  --add-cloudsql-instances=sml-interview-sandbox:us-central1:mdjamal-db
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See [plan.md](plan.md) for the full phased build plan and deployment cheat sheet.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Stack
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework:** Next.js 14 (App Router)
+- **Database:** Cloud SQL — PostgreSQL 15
+- **Compute:** Cloud Run
+- **Secrets:** Secret Manager
+- **GCP project:** `sml-interview-sandbox` / region `us-central1`
