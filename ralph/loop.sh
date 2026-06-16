@@ -13,7 +13,9 @@ mkdir -p "$LOGDIR"
 
 stale=0
 for i in $(seq 1 "$MAX"); do
-  if grep -q "PHASE6 COMPLETE" ralph/PROGRESS.md 2>/dev/null; then
+  # Done only when the sentinel is the EXACT first line (where the agent writes
+  # it) — not when it merely appears in the instructional prose below.
+  if head -1 ralph/PROGRESS.md 2>/dev/null | grep -qx "PHASE6 COMPLETE"; then
     echo "[ralph] PHASE6 COMPLETE — stopping before iteration $i."
     break
   fi
