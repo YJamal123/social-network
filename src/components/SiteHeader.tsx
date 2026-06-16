@@ -76,6 +76,47 @@ export async function SiteHeader() {
           />
         </form>
       </div>
+      {/* Mobile nav fallback: the primary nav is hidden under md, so surface the
+          same links in a scrollable row on small screens. */}
+      <nav className="flex items-center gap-4 overflow-x-auto border-t border-white/10 px-gutter py-2 text-body-base text-on-primary md:hidden">
+        <Link href="/feed" className="font-bold hover:underline">
+          home
+        </Link>
+        <Link href="/directory" className="opacity-90 hover:underline hover:opacity-100">
+          directory
+        </Link>
+        <Link
+          href="/pokes"
+          className="flex items-center gap-1 opacity-90 hover:underline hover:opacity-100"
+        >
+          pokes
+          {pokeCount > 0 && (
+            <span
+              aria-label={`${pokeCount} new pokes`}
+              aria-live="polite"
+              className="inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
+            >
+              {pokeCount}
+            </span>
+          )}
+        </Link>
+        {username && (
+          <Link
+            href={`/profile/${username}`}
+            className="opacity-90 hover:underline hover:opacity-100"
+          >
+            profile
+          </Link>
+        )}
+        <form
+          action={async () => {
+            "use server"
+            await signOut({ redirectTo: "/login" })
+          }}
+        >
+          <button className="opacity-90 hover:underline hover:opacity-100">logout</button>
+        </form>
+      </nav>
     </header>
   )
 }
