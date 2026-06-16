@@ -1,3 +1,4 @@
+PHASE6 COMPLETE
 # Phase 6 Progress
 
 Source of truth for the Ralph loop. Each iteration: do the FIRST unchecked task,
@@ -25,4 +26,4 @@ verify (`tsc` + `build`), commit, tick it. When all are checked, prepend a line
 - [x] 12. `CommentSection` client component integrated into `PostCard`: count toggles an inline thread, lazily loads comments on first expand, with a ≤280-char composer.
 
 ## Wrap-up
-- [ ] 13. Final pass: `npx tsc --noEmit` + `npm run build` clean; quick self-review of all Phase 6 code for convention adherence; then mark complete.
+- [x] 13. Final pass: `npx tsc --noEmit` + `npm run build` clean; quick self-review of all Phase 6 code for convention adherence; then mark complete.
