@@ -2,47 +2,74 @@ import Link from "next/link"
 import { auth, signOut } from "@/lib/auth"
 import { getUnacknowledgedPokeCount } from "@/app/(main)/pokes/actions"
 
-// Shared top bar for all (main) routes. Server component so it can read the
-// session and host the sign-out Server Action inline.
+// Masthead for all (main) routes: solid navy bar, bracketed [ sml ] wordmark,
+// dot-separated text nav, coral poke indicator, and a quick-search box that
+// submits to the directory. Server component (reads session + poke count).
 export async function SiteHeader() {
   const session = await auth()
   const username = session?.user?.name
   const pokeCount = username ? await getUnacknowledgedPokeCount() : 0
 
   return (
-    <header className="border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-2xl items-center justify-between p-4">
-        <Link href="/feed" className="text-lg font-bold">
-          SML
-        </Link>
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          <Link href="/directory" className="hover:underline">
-            Directory
+    <header className="sticky top-0 z-50 w-full border-b border-outline-variant bg-primary">
+      <div className="mx-auto flex h-12 max-w-container-max items-center justify-between gap-4 px-gutter">
+        <div className="flex items-center gap-6">
+          <Link href="/feed" className="text-masthead-logo text-on-primary">
+            [ sml ]
           </Link>
-          {username && (
-            <Link href="/pokes" className="flex items-center gap-1 hover:underline">
-              Pokes
+          <nav className="hidden items-center gap-3 text-body-base text-on-primary md:flex">
+            <Link href="/feed" className="font-bold hover:underline">
+              home
+            </Link>
+            <span className="opacity-50">·</span>
+            <Link href="/directory" className="opacity-90 hover:underline hover:opacity-100">
+              directory
+            </Link>
+            <span className="opacity-50">·</span>
+            <Link
+              href="/pokes"
+              className="flex items-center gap-1 opacity-90 hover:underline hover:opacity-100"
+            >
+              pokes
               {pokeCount > 0 && (
-                <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white">
+                <span className="inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white">
                   {pokeCount}
                 </span>
               )}
             </Link>
-          )}
-          {username && (
-            <Link href={`/profile/${username}`} className="hover:underline">
-              {username}
-            </Link>
-          )}
-          <form
-            action={async () => {
-              "use server"
-              await signOut({ redirectTo: "/login" })
-            }}
-          >
-            <button className="hover:underline">Sign out</button>
-          </form>
+            {username && (
+              <>
+                <span className="opacity-50">·</span>
+                <Link
+                  href={`/profile/${username}`}
+                  className="opacity-90 hover:underline hover:opacity-100"
+                >
+                  profile
+                </Link>
+              </>
+            )}
+            <span className="opacity-50">·</span>
+            <form
+              action={async () => {
+                "use server"
+                await signOut({ redirectTo: "/login" })
+              }}
+            >
+              <button className="opacity-90 hover:underline hover:opacity-100">logout</button>
+            </form>
+          </nav>
         </div>
+        <form
+          action="/directory"
+          className="flex items-center gap-1 rounded bg-white/10 px-2 py-1"
+        >
+          <span className="material-symbols-outlined text-on-primary">search</span>
+          <input
+            name="q"
+            placeholder="Search…"
+            className="w-28 border-none bg-transparent text-body-sm text-on-primary placeholder:text-on-primary/60 focus:outline-none focus:ring-0"
+          />
+        </form>
       </div>
     </header>
   )

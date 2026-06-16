@@ -2,22 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light theme only. The app uses light surfaces (bg-white cards), so we don't
-   flip to a dark foreground under prefers-color-scheme: dark — that turned the
-   inherited input text near-white and made it invisible on the white forms. */
+/* Retro-collegiate light theme (Stitch design system). Light surfaces only —
+   no dark-mode flip (it turned input text near-white on the white forms). */
 :root {
-  --background: #f3f4f6;
-  --foreground: #171717;
+  --background: #e9ebee;
+  --foreground: #141c26;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+  /* Bracketed text actions, e.g. [ edit ] — brackets aren't part of the link. */
+  .bracket-link::before {
+    content: "[ ";
+  }
+  .bracket-link::after {
+    content: " ]";
+  }
+}
+
+/* Material Symbols sizing/baseline for the inline icon font. */
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  vertical-align: middle;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Retro browser scrollbar. */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #c4ccda;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3b5998;
 }
