@@ -64,6 +64,7 @@ export default async function FeedPage() {
           <form action="/directory" className="flex flex-col gap-stack-md">
             <input
               name="q"
+              aria-label="Search people"
               placeholder="Find people…"
               className="w-full rounded border border-outline-variant px-2 py-1.5 text-body-base focus:border-primary focus:outline-none"
             />

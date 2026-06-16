@@ -32,7 +32,11 @@ export async function SiteHeader() {
             >
               pokes
               {pokeCount > 0 && (
-                <span className="inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white">
+                <span
+                  aria-label={`${pokeCount} new pokes`}
+                  aria-live="polite"
+                  className="inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
+                >
                   {pokeCount}
                 </span>
               )}
@@ -66,6 +70,7 @@ export async function SiteHeader() {
           <span className="material-symbols-outlined text-on-primary">search</span>
           <input
             name="q"
+            aria-label="Search people"
             placeholder="Search…"
             className="w-28 border-none bg-transparent text-body-sm text-on-primary placeholder:text-on-primary/60"
           />
