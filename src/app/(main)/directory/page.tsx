@@ -4,6 +4,7 @@ import { query } from "@/lib/db"
 import { FollowButton } from "@/components/FollowButton"
 import { DirectorySearch } from "@/components/DirectorySearch"
 import { Panel } from "@/components/Panel"
+import { Avatar } from "@/components/Avatar"
 
 interface DirectoryRow {
   id: string
@@ -83,9 +84,7 @@ export default async function DirectoryPage({
                   key={u.id}
                   className="flex gap-3 bg-white p-panel-padding transition-colors hover:bg-surface-container"
                 >
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border border-outline-variant bg-primary-container text-2xl font-bold text-white">
-                    {u.username.charAt(0).toUpperCase()}
-                  </div>
+                  <Avatar username={u.username} size="lg" />
                   <div className="min-w-0 flex-grow">
                     <Link
                       href={`/profile/${u.username}`}

@@ -1,21 +1,17 @@
 import Link from "next/link"
 import type { PostWithAuthor } from "@/lib/types"
 import { timeAgo } from "@/lib/time"
+import { Avatar } from "@/components/Avatar"
 import { LikeButton } from "@/components/LikeButton"
 import { CommentSection } from "@/components/CommentSection"
 
 export function PostCard({ post }: { post: PostWithAuthor }) {
-  const initial = post.username.charAt(0).toUpperCase()
-
   return (
     <article className="overflow-hidden rounded-lg bg-surface-container-lowest shadow">
       <div className="p-panel-padding">
         <div className="flex gap-stack-lg">
-          <Link
-            href={`/profile/${post.username}`}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded border-2 border-primary bg-primary-container text-lg font-bold text-white"
-          >
-            {initial}
+          <Link href={`/profile/${post.username}`} className="shrink-0">
+            <Avatar username={post.username} size="md" />
           </Link>
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">

@@ -7,6 +7,7 @@ import { FollowButton } from "@/components/FollowButton"
 import { PokeButton } from "@/components/PokeButton"
 import { WallComposer } from "@/components/WallComposer"
 import { Panel } from "@/components/Panel"
+import { Avatar } from "@/components/Avatar"
 import { getWallPosts } from "@/app/(main)/profile/actions"
 import { timeAgo } from "@/lib/time"
 import type { PostWithAuthor, ProfileUser } from "@/lib/types"
@@ -106,8 +107,8 @@ export default async function ProfilePage({
       {/* Left rail */}
       <aside className="flex w-full shrink-0 flex-col gap-stack-lg md:w-52">
         <div className="rounded-lg bg-surface-container-lowest p-panel-padding shadow">
-          <div className="mb-2 flex aspect-square items-center justify-center rounded border-2 border-primary bg-primary-container text-6xl font-bold text-white">
-            {profile.username.charAt(0).toUpperCase()}
+          <div className="mb-2">
+            <Avatar username={profile.username} size="xl" />
           </div>
           {isOwnProfile && (
             <div className="text-center">
