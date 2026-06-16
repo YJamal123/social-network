@@ -4,7 +4,7 @@ import { query } from "@/lib/db"
 import { FollowButton } from "@/components/FollowButton"
 import { DirectorySearch } from "@/components/DirectorySearch"
 import { Panel } from "@/components/Panel"
-import { Avatar } from "@/components/Avatar"
+import { UserRow } from "@/components/UserRow"
 import { EmptyState } from "@/components/EmptyState"
 
 interface DirectoryRow {
@@ -80,30 +80,26 @@ export default async function DirectoryPage({
               return (
                 <div
                   key={u.id}
-                  className="flex gap-3 bg-white p-panel-padding transition-colors hover:bg-surface-container"
+                  className="bg-white p-panel-padding transition-colors hover:bg-surface-container"
                 >
-                  <Avatar username={u.username} size="lg" />
-                  <div className="min-w-0 flex-grow">
-                    <Link
-                      href={`/profile/${u.username}`}
-                      className="block truncate text-label-bold text-primary hover:underline"
-                    >
-                      {u.username}
-                    </Link>
-                    {u.bio ? (
-                      <p className="mb-2 truncate text-body-sm text-on-surface-variant">
-                        {u.bio}
-                      </p>
-                    ) : (
-                      <p className="mb-2 text-body-sm italic text-outline">No bio yet.</p>
-                    )}
-                    {viewerId && !isSelf && (
-                      <FollowButton
-                        targetUserId={u.id}
-                        initialFollowing={u.followed_by_me}
-                      />
-                    )}
-                  </div>
+                  <UserRow
+                    username={u.username}
+                    subtitle={
+                      u.bio ? (
+                        <span className="text-on-surface-variant">{u.bio}</span>
+                      ) : (
+                        <span className="italic text-outline">No bio yet.</span>
+                      )
+                    }
+                    action={
+                      viewerId && !isSelf ? (
+                        <FollowButton
+                          targetUserId={u.id}
+                          initialFollowing={u.followed_by_me}
+                        />
+                      ) : undefined
+                    }
+                  />
                 </div>
               )
             })}

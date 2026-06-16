@@ -1,9 +1,8 @@
-import Link from "next/link"
 import { timeAgo } from "@/lib/time"
 import { PokeBackButton } from "@/components/PokeBackButton"
 import { PokesAck } from "@/components/PokesAck"
 import { Panel } from "@/components/Panel"
-import { Avatar } from "@/components/Avatar"
+import { UserRow } from "@/components/UserRow"
 import { EmptyState } from "@/components/EmptyState"
 import { getPokers } from "./actions"
 
@@ -30,23 +29,17 @@ export default async function PokesPage() {
             {pokers.map((p) => (
               <div
                 key={p.poker_id}
-                className="flex items-center gap-3 border-b border-outline-variant p-panel-padding transition-colors last:border-0 hover:bg-surface-container"
+                className="border-b border-outline-variant p-panel-padding transition-colors last:border-0 hover:bg-surface-container"
               >
-                <Link href={`/profile/${p.poker_username}`} className="shrink-0">
-                  <Avatar username={p.poker_username} size="sm" />
-                </Link>
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/profile/${p.poker_username}`}
-                    className="text-label-bold text-primary hover:underline"
-                  >
-                    {p.poker_username}
-                  </Link>
-                  <p className="text-body-sm text-outline">
-                    poked you · {timeAgo(p.created_at)}
-                  </p>
-                </div>
-                <PokeBackButton pokerId={p.poker_id} />
+                <UserRow
+                  username={p.poker_username}
+                  subtitle={
+                    <span className="text-outline">
+                      poked you · {timeAgo(p.created_at)}
+                    </span>
+                  }
+                  action={<PokeBackButton pokerId={p.poker_id} />}
+                />
               </div>
             ))}
           </div>
