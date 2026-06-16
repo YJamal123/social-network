@@ -1,6 +1,7 @@
 import Link from "next/link"
 import type { PostWithAuthor } from "@/lib/types"
 import { timeAgo } from "@/lib/time"
+import { LikeButton } from "@/components/LikeButton"
 
 export function PostCard({ post }: { post: PostWithAuthor }) {
   const initial = post.username.charAt(0).toUpperCase()
@@ -20,6 +21,13 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
         <span className="text-xs text-gray-400">· {timeAgo(post.created_at)}</span>
       </div>
       <p className="whitespace-pre-wrap break-words text-gray-800">{post.content}</p>
+      <div className="mt-3 flex items-center gap-4">
+        <LikeButton
+          postId={post.id}
+          initialLiked={post.liked_by_me}
+          initialCount={post.like_count}
+        />
+      </div>
     </article>
   )
 }
