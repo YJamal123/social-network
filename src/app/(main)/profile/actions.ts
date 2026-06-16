@@ -182,7 +182,6 @@ const ALLOWED_AVATAR_TYPES = [
 // writes to the session user's own row. Stored as bytea in Cloud SQL and served
 // by /api/avatar/[id].
 export async function uploadAvatar(
-  _prev: AvatarState,
   formData: FormData
 ): Promise<AvatarState> {
   const session = await auth()
