@@ -4,6 +4,9 @@ import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { PostCard } from "@/components/PostCard"
 import { FollowButton } from "@/components/FollowButton"
+import { WallComposer } from "@/components/WallComposer"
+import { getWallPosts } from "@/app/(main)/profile/actions"
+import { timeAgo } from "@/lib/time"
 import type { PostWithAuthor, ProfileUser } from "@/lib/types"
 
 async function getProfile(username: string): Promise<ProfileUser | null> {
@@ -66,6 +69,7 @@ export default async function ProfilePage({
       ? await isFollowing(session.user.id, profile.id)
       : false
   const posts = await getUserPosts(profile.id, session?.user?.id ?? null)
+  const wallPosts = await getWallPosts(profile.id)
 
   const joined = new Date(profile.created_at).toLocaleDateString(undefined, {
     month: "long",
@@ -123,13 +127,48 @@ export default async function ProfilePage({
         </div>
       </section>
 
-      <div className="space-y-3">
-        {posts.length === 0 ? (
-          <p className="py-8 text-center text-gray-400">No posts yet.</p>
-        ) : (
-          posts.map((post) => <PostCard key={post.id} post={post} />)
-        )}
-      </div>
+      <section className="mb-8">
+        <h2 className="mb-3 text-lg font-semibold text-gray-800">Wall</h2>
+        {session?.user?.id && <WallComposer ownerId={profile.id} />}
+        <div className="space-y-3">
+          {wallPosts.length === 0 ? (
+            <p className="py-6 text-center text-gray-400">
+              Nothing on the wall yet.
+            </p>
+          ) : (
+            wallPosts.map((wp) => (
+              <div
+                key={wp.id}
+                className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+              >
+                <p className="text-sm text-gray-500">
+                  <Link
+                    href={`/profile/${wp.author_username}`}
+                    className="font-semibold text-gray-700 hover:underline"
+                  >
+                    {wp.author_username}
+                  </Link>{" "}
+                  · {timeAgo(wp.created_at)}
+                </p>
+                <p className="mt-1 whitespace-pre-wrap break-words text-gray-800">
+                  {wp.content}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-lg font-semibold text-gray-800">Posts</h2>
+        <div className="space-y-3">
+          {posts.length === 0 ? (
+            <p className="py-8 text-center text-gray-400">No posts yet.</p>
+          ) : (
+            posts.map((post) => <PostCard key={post.id} post={post} />)
+          )}
+        </div>
+      </section>
     </main>
   )
 }

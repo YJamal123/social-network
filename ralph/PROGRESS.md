@@ -11,7 +11,7 @@ COMPLETE` the exact first line of this file and commit.
 ## The Wall
 - [x] 3. `postToWall(ownerId, content)` server action + a `getWallPosts(ownerId)` helper (or inline query) returning posts joined with author username, newest first.
 - [x] 4. `WallComposer` client component (write on a wall, optimistic-friendly, ≤280 chars).
-- [ ] 5. Profile page: a Wall section (author-attributed posts + composer), distinct from the user's own posts.
+- [x] 5. Profile page: a Wall section (author-attributed posts + composer), distinct from the user's own posts.
 
 ## User search / directory
 - [ ] 6. `/directory` page (server component): list users, `?q=` filters by `username ILIKE`, each row shows avatar/username/bio + a `FollowButton` (per-row follow state; none for self).
