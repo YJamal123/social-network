@@ -70,6 +70,11 @@ export interface Poke {
   acknowledged: boolean
 }
 
+// A poke joined with the poker's username — used in the /pokes list
+export interface PokeWithPoker extends Poke {
+  poker_username: string
+}
+
 // Public-facing user view for a profile page (no email / password_hash)
 export interface ProfileUser {
   id: string

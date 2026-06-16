@@ -18,7 +18,7 @@ COMPLETE` the exact first line of this file and commit.
 - [x] 7. Search input client component submitting to `/directory?q=...`, and a "Directory" link in `SiteHeader`.
 
 ## The Poke
-- [ ] 8. `poke(targetId)` server action (upsert, ignore self-poke, revalidate) + helpers to count unacknowledged pokes and list pokers.
+- [x] 8. `poke(targetId)` server action (upsert, ignore self-poke, revalidate) + helpers to count unacknowledged pokes and list pokers.
 - [ ] 9. `PokeButton` client component on other users' profiles.
 - [ ] 10. Unacknowledged-poke indicator in `SiteHeader` + a `/pokes` page (who poked you, "Poke back" that pokes them and acknowledges theirs).
 
