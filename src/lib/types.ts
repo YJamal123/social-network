@@ -18,3 +18,12 @@ export interface Post {
 export interface PostWithAuthor extends Post {
   username: string
 }
+
+// Public-facing user view for a profile page (no email / password_hash)
+export interface ProfileUser {
+  id: string
+  username: string
+  bio: string | null
+  created_at: string
+  post_count: number
+}

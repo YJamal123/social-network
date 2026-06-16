@@ -1,4 +1,3 @@
-import { auth, signOut } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { PostForm } from "@/components/PostForm"
 import { PostCard } from "@/components/PostCard"
@@ -16,25 +15,11 @@ async function getPosts(): Promise<PostWithAuthor[]> {
 }
 
 export default async function FeedPage() {
-  const session = await auth()
   const posts = await getPosts()
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Feed</h1>
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          <span>{session?.user?.name}</span>
-          <form
-            action={async () => {
-              "use server"
-              await signOut({ redirectTo: "/login" })
-            }}
-          >
-            <button className="hover:underline">Sign out</button>
-          </form>
-        </div>
-      </div>
+      <h1 className="mb-6 text-2xl font-bold">Feed</h1>
 
       <PostForm />
 
