@@ -5,7 +5,7 @@ verify (`tsc` + `build`), commit, tick it. When all are checked, make `RALPH
 COMPLETE` the exact first line of this file and commit.
 
 ## Foundation
-- [ ] 1. Migrate SCHEMA (`src/app/api/migrate/route.ts`): add `wall_posts` and `pokes` tables (+ indexes), and `ALTER TABLE users ADD COLUMN IF NOT EXISTS relationship_status / interests / courses`. All idempotent.
+- [x] 1. Migrate SCHEMA (`src/app/api/migrate/route.ts`): add `wall_posts` and `pokes` tables (+ indexes), and `ALTER TABLE users ADD COLUMN IF NOT EXISTS relationship_status / interests / courses`. All idempotent.
 - [ ] 2. Types (`src/lib/types.ts`): add `WallPost`, `WallPostWithAuthor`, `Poke`; extend `User` and `ProfileUser` with `relationship_status`, `interests`, `courses`.
 
 ## The Wall

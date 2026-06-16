@@ -52,6 +52,30 @@ CREATE TABLE IF NOT EXISTS comments (
 );
 
 CREATE INDEX IF NOT EXISTS comments_post_id_idx ON comments(post_id);
+
+CREATE TABLE IF NOT EXISTS wall_posts (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id   UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  author_id  UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content    TEXT        NOT NULL CHECK (char_length(content) <= 280),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS wall_posts_owner_id_idx ON wall_posts(owner_id);
+
+CREATE TABLE IF NOT EXISTS pokes (
+  poker_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  pokee_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  acknowledged BOOLEAN     NOT NULL DEFAULT false,
+  PRIMARY KEY (poker_id, pokee_id)
+);
+
+CREATE INDEX IF NOT EXISTS pokes_pokee_id_idx ON pokes(pokee_id);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS relationship_status TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS interests TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS courses TEXT;
 `
 
 export async function POST(request: Request) {
