@@ -59,7 +59,7 @@ export default async function FeedPage() {
   const posts = session?.user?.id ? await getPosts(session.user.id) : []
 
   return (
-    <main className="mx-auto grid max-w-container-max grid-cols-1 gap-gutter px-gutter py-stack-lg md:grid-cols-12">
+    <main className="mx-auto grid max-w-container-max grid-cols-1 gap-gutter-wide px-gutter py-stack-lg md:grid-cols-12">
       <aside className="flex flex-col gap-stack-lg md:col-span-4 lg:col-span-3">
         <Panel title="Quick Search">
           <form action="/directory" className="flex flex-col gap-stack-md">

@@ -68,10 +68,14 @@ const config: Config = {
       },
       spacing: {
         gutter: "16px",
+        "gutter-wide": "20px",
         "panel-padding": "12px",
         "stack-sm": "4px",
         "stack-md": "8px",
         "stack-lg": "16px",
+        badge: "1.1rem",
+        composer: "60px",
+        search: "7rem",
       },
       maxWidth: {
         "container-max": "960px",

@@ -63,7 +63,7 @@ function Stat({ n, label }: { n: number; label: string }) {
   return (
     <div>
       <div className="font-bold text-primary">{n}</div>
-      <div className="text-[10px] uppercase tracking-wide text-outline">{label}</div>
+      <div className="text-caption uppercase tracking-wide text-outline">{label}</div>
     </div>
   )
 }
@@ -166,6 +166,7 @@ export default async function ProfilePage({
         {/* Information */}
         <Panel
           title="Information"
+          bodyClassName="p-4"
           action={
             isOwnProfile && (
               <Link
@@ -205,7 +206,7 @@ export default async function ProfilePage({
         </Panel>
 
         {/* The Wall */}
-        <Panel title="The Wall">
+        <Panel title="The Wall" bodyClassName="p-4">
           {session?.user?.id && <WallComposer ownerId={profile.id} />}
           {wallPosts.length === 0 ? (
             <EmptyState icon="sticky_note_2" message="Nothing on the wall yet." />

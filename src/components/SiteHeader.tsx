@@ -35,7 +35,7 @@ export async function SiteHeader() {
                 <span
                   aria-label={`${pokeCount} new pokes`}
                   aria-live="polite"
-                  className="inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
+                  className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
                 >
                   {pokeCount}
                 </span>
@@ -72,7 +72,7 @@ export async function SiteHeader() {
             name="q"
             aria-label="Search people"
             placeholder="Search…"
-            className="w-28 border-none bg-transparent text-body-sm text-on-primary placeholder:text-on-primary/60"
+            className="w-search border-none bg-transparent text-body-sm text-on-primary placeholder:text-on-primary/60"
           />
         </form>
       </div>
@@ -94,7 +94,7 @@ export async function SiteHeader() {
             <span
               aria-label={`${pokeCount} new pokes`}
               aria-live="polite"
-              className="inline-flex min-w-[1.1rem] items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
+              className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
             >
               {pokeCount}
             </span>

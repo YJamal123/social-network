@@ -40,7 +40,7 @@ export function WallComposer({ ownerId }: { ownerId: string }) {
         rows={3}
         required
         placeholder="Write something…"
-        className={`${fieldClass} min-h-[60px] resize-none`}
+        className={`${fieldClass} min-h-composer resize-none`}
       />
 
       {error && <p className="mt-1 text-body-sm text-error">{error}</p>}

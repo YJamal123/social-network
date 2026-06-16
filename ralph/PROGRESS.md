@@ -28,7 +28,7 @@ the exact first line of this file and commit.
 - [x] 14. Create `src/components/EmptyState.tsx` (icon + muted message, the directory pattern) and adopt it for the feed, profile posts, the Wall, and pokes empty states.
 - [x] 15. Create `src/components/UserRow.tsx` (Avatar `sm` + name `<Link>` + muted subtitle + trailing `action?: ReactNode`) and use it in `directory/page.tsx` and `pokes/page.tsx`.
 - [x] 16. Create `src/components/UserNameTime.tsx` (name link + `timeAgo`) and use it in `PostCard.tsx`, the Wall list in `profile/[username]/page.tsx`, and `CommentSection.tsx`.
-- [ ] 17. Retire arbitrary values using tokens (`text-[10px]` → `caption`; `min-w-[1.1rem]`, `min-h-[60px]`, `w-28` → named spacing tokens added to config). Bump primary content cards (PostCard, profile Information/Wall) toward `p-4`, and widen the feed two-column gap slightly. Confirm coral is only on like/poke.
+- [x] 17. Retire arbitrary values using tokens (`text-[10px]` → `caption`; `min-w-[1.1rem]`, `min-h-[60px]`, `w-28` → named spacing tokens added to config). Bump primary content cards (PostCard, profile Information/Wall) toward `p-4`, and widen the feed two-column gap slightly. Confirm coral is only on like/poke.
 
 ## Phase 6 — Server-side dedupe (no visual change)
 - [ ] 18. Create `src/lib/queries.ts` with a shared post-with-engagement helper (returns `PostWithAuthor[]`); replace the identical `like_count`/`liked_by_me`/`comment_count` subquery block in `getPosts` (`feed/page.tsx`) and `getUserPosts` (`profile/[username]/page.tsx`) — they differ only in WHERE. Raw `pg` via `query()` only, no ORM.

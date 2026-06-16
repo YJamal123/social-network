@@ -8,7 +8,7 @@ import { CommentSection } from "@/components/CommentSection"
 export function PostCard({ post }: { post: PostWithAuthor }) {
   return (
     <article className="overflow-hidden rounded-lg bg-surface-container-lowest shadow">
-      <div className="p-panel-padding">
+      <div className="p-4">
         <div className="flex gap-stack-lg">
           <Link href={`/profile/${post.username}`} className="shrink-0">
             <Avatar username={post.username} size="md" />
