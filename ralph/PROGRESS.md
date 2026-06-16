@@ -15,7 +15,7 @@ verify (`tsc` + `build`), commit, tick it. When all are checked, prepend a line
 - [x] 6. Feed query: posts from followed users + self, newest first; fall back to ALL posts if following nobody.
 
 ## 6b — Likes
-- [ ] 7. `toggleLike(postId)` server action (insert/delete, revalidate).
+- [x] 7. `toggleLike(postId)` server action (insert/delete, revalidate).
 - [ ] 8. Extend feed AND profile post queries with `like_count` + `liked_by_me` for the current user.
 - [ ] 9. `LikeButton` client component (heart + count, optimistic), integrated into `PostCard`.
 
