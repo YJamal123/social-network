@@ -1,3 +1,5 @@
+RALPH COMPLETE
+
 # Phase 7 Progress — authentic Facebook-'04 features
 
 Source of truth for the Ralph loop. Each iteration: do the FIRST unchecked task,
@@ -27,4 +29,4 @@ COMPLETE` the exact first line of this file and commit.
 
 ## Demo seed + wrap-up
 - [x] 12. Extend `src/app/api/seed/route.ts`: demo `relationship_status`/`interests`/`courses`, a set of `wall_posts` (author ≠ owner), some `pokes` (a few unacknowledged); include `wallPosts` + `pokes` in the returned counts; keep it in the existing idempotent transaction.
-- [ ] 13. Final pass: `npx tsc --noEmit` + `npm run build` clean; self-review all Phase 7 code for convention adherence; then mark complete.
+- [x] 13. Final pass: `npx tsc --noEmit` + `npm run build` clean; self-review all Phase 7 code for convention adherence; then mark complete.
