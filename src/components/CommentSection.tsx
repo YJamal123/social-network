@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import { addComment, getComments } from "@/app/(main)/feed/actions"
 import type { CommentWithAuthor } from "@/lib/types"
-import { timeAgo } from "@/lib/time"
+import { UserNameTime } from "@/components/UserNameTime"
 import { buttonClass, fieldClass } from "@/lib/ui"
 
 const MAX_COMMENT_LENGTH = 280
@@ -96,12 +96,11 @@ export function CommentSection({
               key={comment.id}
               className="rounded border border-outline-variant bg-white p-2"
             >
-              <div className="mb-0.5 flex items-center justify-between gap-2">
-                <span className="text-label-bold text-primary">{comment.username}</span>
-                <span className="text-body-sm text-on-surface-variant">
-                  {timeAgo(comment.created_at)}
-                </span>
-              </div>
+              <UserNameTime
+                username={comment.username}
+                time={comment.created_at}
+                className="mb-0.5"
+              />
               <p className="whitespace-pre-wrap break-words text-body-sm text-on-surface">
                 {comment.content}
               </p>

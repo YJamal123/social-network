@@ -9,8 +9,8 @@ import { WallComposer } from "@/components/WallComposer"
 import { Panel } from "@/components/Panel"
 import { Avatar } from "@/components/Avatar"
 import { EmptyState } from "@/components/EmptyState"
+import { UserNameTime } from "@/components/UserNameTime"
 import { getWallPosts } from "@/app/(main)/profile/actions"
-import { timeAgo } from "@/lib/time"
 import type { PostWithAuthor, ProfileUser } from "@/lib/types"
 
 async function getProfile(username: string): Promise<ProfileUser | null> {
@@ -216,17 +216,10 @@ export default async function ProfilePage({
                   key={wp.id}
                   className="border-b border-outline-variant pb-3 last:border-0 last:pb-0"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <Link
-                      href={`/profile/${wp.author_username}`}
-                      className="text-body-sm font-bold text-primary hover:underline"
-                    >
-                      {wp.author_username}
-                    </Link>
-                    <span className="shrink-0 text-[10px] text-on-surface-variant">
-                      {timeAgo(wp.created_at)}
-                    </span>
-                  </div>
+                  <UserNameTime
+                    username={wp.author_username}
+                    time={wp.created_at}
+                  />
                   <p className="mt-1 whitespace-pre-wrap break-words text-body-base text-on-surface">
                     {wp.content}
                   </p>

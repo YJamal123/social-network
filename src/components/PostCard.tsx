@@ -1,7 +1,7 @@
 import Link from "next/link"
 import type { PostWithAuthor } from "@/lib/types"
-import { timeAgo } from "@/lib/time"
 import { Avatar } from "@/components/Avatar"
+import { UserNameTime } from "@/components/UserNameTime"
 import { LikeButton } from "@/components/LikeButton"
 import { CommentSection } from "@/components/CommentSection"
 
@@ -14,17 +14,7 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
             <Avatar username={post.username} size="md" />
           </Link>
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <Link
-                href={`/profile/${post.username}`}
-                className="text-label-bold text-primary hover:underline"
-              >
-                {post.username}
-              </Link>
-              <span className="shrink-0 text-body-sm text-on-surface-variant">
-                {timeAgo(post.created_at)}
-              </span>
-            </div>
+            <UserNameTime username={post.username} time={post.created_at} />
             <p className="mt-1 whitespace-pre-wrap break-words text-body-base text-on-background">
               {post.content}
             </p>
