@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { addComment, getComments } from "@/app/(main)/feed/actions"
 import type { CommentWithAuthor } from "@/lib/types"
 import { timeAgo } from "@/lib/time"
-import { buttonClass } from "@/lib/ui"
+import { buttonClass, fieldClass } from "@/lib/ui"
 
 const MAX_COMMENT_LENGTH = 280
 
@@ -115,7 +115,7 @@ export function CommentSection({
               maxLength={MAX_COMMENT_LENGTH}
               rows={2}
               placeholder="Write a comment…"
-              className="w-full resize-none rounded border border-outline-variant bg-white p-2 text-body-sm text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+              className={`${fieldClass} resize-none`}
             />
             {error && <p className="text-body-sm text-error">{error}</p>}
             <div className="flex items-center justify-between">

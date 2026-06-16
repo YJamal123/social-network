@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
-import { buttonClass } from "@/lib/ui"
+import { buttonClass, fieldClass } from "@/lib/ui"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -52,14 +52,14 @@ export default function LoginPage() {
             type="email"
             placeholder="Email"
             required
-            className="w-full rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+            className={fieldClass}
           />
           <input
             name="password"
             type="password"
             placeholder="Password"
             required
-            className="w-full rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+            className={fieldClass}
           />
 
           <button

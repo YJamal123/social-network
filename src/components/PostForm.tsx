@@ -3,7 +3,7 @@
 import { useRef, useState, useTransition } from "react"
 import { createPost } from "@/app/(main)/feed/actions"
 import { Panel } from "@/components/Panel"
-import { buttonClass } from "@/lib/ui"
+import { buttonClass, fieldClass } from "@/lib/ui"
 
 const MAX = 280
 
@@ -38,7 +38,7 @@ export function PostForm() {
           rows={3}
           required
           placeholder="Type your status here…"
-          className="w-full resize-none rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+          className={`${fieldClass} resize-none`}
         />
 
         {error && <p className="text-body-sm text-error">{error}</p>}

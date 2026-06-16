@@ -4,14 +4,13 @@ import { useFormState } from "react-dom"
 import Link from "next/link"
 import { updateProfile } from "@/app/(main)/profile/actions"
 import { Panel } from "@/components/Panel"
+import { fieldClass } from "@/lib/ui"
 
 const MAX_BIO = 280
 const MAX_RELATIONSHIP = 50
 const MAX_INTERESTS = 280
 const MAX_COURSES = 280
 
-const fieldClass =
-  "mt-1 w-full rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
 const labelClass = "block text-label-bold text-secondary"
 
 export function ProfileEditForm({
@@ -46,7 +45,7 @@ export function ProfileEditForm({
             maxLength={MAX_BIO}
             rows={4}
             placeholder="Tell people about yourself"
-            className={`${fieldClass} resize-none`}
+            className={`${fieldClass} mt-1 resize-none`}
           />
         </label>
 
@@ -58,7 +57,7 @@ export function ProfileEditForm({
             defaultValue={initialRelationshipStatus}
             maxLength={MAX_RELATIONSHIP}
             placeholder="e.g. Single, In a relationship, It's complicated"
-            className={fieldClass}
+            className={`${fieldClass} mt-1`}
           />
         </label>
 
@@ -70,7 +69,7 @@ export function ProfileEditForm({
             maxLength={MAX_INTERESTS}
             rows={2}
             placeholder="Music, movies, books…"
-            className={`${fieldClass} resize-none`}
+            className={`${fieldClass} mt-1 resize-none`}
           />
         </label>
 
@@ -82,7 +81,7 @@ export function ProfileEditForm({
             maxLength={MAX_COURSES}
             rows={2}
             placeholder="Classes you're taking"
-            className={`${fieldClass} resize-none`}
+            className={`${fieldClass} mt-1 resize-none`}
           />
         </label>
 

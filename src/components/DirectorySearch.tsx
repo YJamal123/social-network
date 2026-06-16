@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { fieldClass } from "@/lib/ui"
 
 export function DirectorySearch({ initialQuery }: { initialQuery: string }) {
   const router = useRouter()
@@ -21,7 +22,7 @@ export function DirectorySearch({ initialQuery }: { initialQuery: string }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search by name, major, or interest…"
-        className="w-full rounded border border-outline-variant bg-white px-3 py-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+        className={fieldClass}
       />
       <button
         type="submit"

@@ -10,7 +10,7 @@ the exact first line of this file and commit.
 - [x] 2. Create `src/lib/ui.ts` exporting a `buttonClass` map (`primary`/`outline`/`ghost`) and a shared `fieldClass`. Hovers use real color shifts (not opacity); every variant includes a visible `focus-visible:ring-2 focus-visible:ring-secondary-container focus-visible:outline-none`. (No JSX here — class strings only.)
 - [x] 3. Replace the outline-button className in `FollowButton.tsx`, `PokeButton.tsx`, `PokeBackButton.tsx` with `buttonClass.outline` (keep each component's own state/transition logic).
 - [x] 4. Replace the primary-fill button className in `PostForm.tsx`, `WallComposer.tsx`, `CommentSection.tsx`, the feed Quick Search button (`feed/page.tsx`), and login/register with `buttonClass.primary`.
-- [ ] 5. Replace the duplicated input/textarea className in `PostForm.tsx`, `WallComposer.tsx`, `CommentSection.tsx`, `ProfileEditForm.tsx`, login/register, and `DirectorySearch.tsx` with the shared `fieldClass` (which adds the focus ring).
+- [x] 5. Replace the duplicated input/textarea className in `PostForm.tsx`, `WallComposer.tsx`, `CommentSection.tsx`, `ProfileEditForm.tsx`, login/register, and `DirectorySearch.tsx` with the shared `fieldClass` (which adds the focus ring).
 - [ ] 6. Fix `SiteHeader.tsx` search focus (currently `focus:ring-0`) and optionally add an `@layer base` rule in `globals.css` giving `input, textarea` a guaranteed focus ring.
 
 ## Phase 3 — Resilience: loading, error, not-found

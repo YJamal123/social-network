@@ -3,7 +3,7 @@
 import { useFormState } from "react-dom"
 import Link from "next/link"
 import { register } from "./actions"
-import { buttonClass } from "@/lib/ui"
+import { buttonClass, fieldClass } from "@/lib/ui"
 
 export default function RegisterPage() {
   const [state, formAction] = useFormState(register, {})
@@ -28,14 +28,14 @@ export default function RegisterPage() {
             name="username"
             placeholder="Username"
             required
-            className="w-full rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+            className={fieldClass}
           />
           <input
             name="email"
             type="email"
             placeholder="Email"
             required
-            className="w-full rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+            className={fieldClass}
           />
           <input
             name="password"
@@ -43,7 +43,7 @@ export default function RegisterPage() {
             placeholder="Password (min 6 chars)"
             required
             minLength={6}
-            className="w-full rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+            className={fieldClass}
           />
 
           <button

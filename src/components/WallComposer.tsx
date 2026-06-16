@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react"
 import { postToWall } from "@/app/(main)/profile/actions"
-import { buttonClass } from "@/lib/ui"
+import { buttonClass, fieldClass } from "@/lib/ui"
 
 const MAX = 280
 
@@ -40,7 +40,7 @@ export function WallComposer({ ownerId }: { ownerId: string }) {
         rows={3}
         required
         placeholder="Write something…"
-        className="min-h-[60px] w-full resize-none rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+        className={`${fieldClass} min-h-[60px] resize-none`}
       />
 
       {error && <p className="mt-1 text-body-sm text-error">{error}</p>}
