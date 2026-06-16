@@ -32,46 +32,51 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-      >
-        <h1 className="text-2xl font-bold">Log in</h1>
-
-        {error && (
-          <p className="rounded bg-red-50 p-2 text-sm text-red-600">{error}</p>
-        )}
-
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          required
-          className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500"
-        />
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          required
-          className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500"
-        />
-
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded bg-blue-600 p-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+      <div className="w-full max-w-sm">
+        <div className="mb-4 text-center text-masthead-logo text-primary">[ sml ]</div>
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 border border-outline-variant bg-surface-container-lowest p-6 shadow-sm"
         >
-          {pending ? "Logging in…" : "Log in"}
-        </button>
+          <h1 className="text-label-bold text-on-surface">Sign in to your network</h1>
 
-        <p className="text-center text-sm text-gray-500">
-          No account?{" "}
-          <Link href="/register" className="text-blue-600 hover:underline">
-            Sign up
-          </Link>
-        </p>
-      </form>
+          {error && (
+            <p className="rounded bg-error-container p-2 text-body-sm text-error">
+              {error}
+            </p>
+          )}
+
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            required
+            className="w-full rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+          />
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            required
+            className="w-full rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
+          />
+
+          <button
+            type="submit"
+            disabled={pending}
+            className="w-full rounded bg-primary p-2 text-label-bold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {pending ? "Logging in…" : "Log in"}
+          </button>
+
+          <p className="text-center text-body-sm text-outline">
+            No account?{" "}
+            <Link href="/register" className="bracket-link text-primary hover:underline">
+              create account
+            </Link>
+          </p>
+        </form>
+      </div>
     </main>
   )
 }

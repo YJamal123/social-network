@@ -21,7 +21,7 @@ export function PokeBackButton({ pokerId }: { pokerId: string }) {
       type="button"
       onClick={handleClick}
       disabled={pending || done}
-      className="shrink-0 rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+      className="shrink-0 rounded border border-primary px-3 py-1 text-label-bold text-primary transition-colors hover:bg-surface-container disabled:opacity-50"
     >
       {done ? "Poked back!" : "Poke back"}
     </button>
