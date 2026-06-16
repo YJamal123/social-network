@@ -3,19 +3,31 @@ import { notFound } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { PostCard } from "@/components/PostCard"
+import { FollowButton } from "@/components/FollowButton"
 import type { PostWithAuthor, ProfileUser } from "@/lib/types"
 
 async function getProfile(username: string): Promise<ProfileUser | null> {
   const result = await query<ProfileUser>(
     `SELECT u.id, u.username, u.bio, u.created_at,
-            COUNT(p.id)::int AS post_count
+            (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count,
+            (SELECT COUNT(*)::int FROM follows f WHERE f.following_id = u.id) AS follower_count,
+            (SELECT COUNT(*)::int FROM follows f WHERE f.follower_id = u.id) AS following_count
        FROM users u
-       LEFT JOIN posts p ON p.user_id = u.id
-      WHERE u.username = $1
-      GROUP BY u.id`,
+      WHERE u.username = $1`,
     [username]
   )
   return result.rows[0] ?? null
+}
+
+async function isFollowing(
+  followerId: string,
+  targetUserId: string
+): Promise<boolean> {
+  const result = await query(
+    "SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = $2",
+    [followerId, targetUserId]
+  )
+  return Boolean(result.rowCount && result.rowCount > 0)
 }
 
 async function getUserPosts(userId: string): Promise<PostWithAuthor[]> {
@@ -41,6 +53,10 @@ export default async function ProfilePage({
 
   const session = await auth()
   const isOwnProfile = session?.user?.id === profile.id
+  const following =
+    session?.user?.id && !isOwnProfile
+      ? await isFollowing(session.user.id, profile.id)
+      : false
   const posts = await getUserPosts(profile.id)
 
   const joined = new Date(profile.created_at).toLocaleDateString(undefined, {
@@ -58,13 +74,20 @@ export default async function ProfilePage({
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
               <h1 className="truncate text-2xl font-bold">{profile.username}</h1>
-              {isOwnProfile && (
+              {isOwnProfile ? (
                 <Link
                   href={`/profile/${profile.username}/edit`}
                   className="shrink-0 rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Edit profile
                 </Link>
+              ) : (
+                session?.user?.id && (
+                  <FollowButton
+                    targetUserId={profile.id}
+                    initialFollowing={following}
+                  />
+                )
               )}
             </div>
             {profile.bio ? (
@@ -75,6 +98,16 @@ export default async function ProfilePage({
               <p className="mt-1 text-sm italic text-gray-400">No bio yet.</p>
             )}
             <p className="mt-3 text-sm text-gray-500">
+              <span className="font-semibold text-gray-700">
+                {profile.follower_count}
+              </span>{" "}
+              {profile.follower_count === 1 ? "follower" : "followers"} ·{" "}
+              <span className="font-semibold text-gray-700">
+                {profile.following_count}
+              </span>{" "}
+              following
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
               {profile.post_count} {profile.post_count === 1 ? "post" : "posts"} ·
               Joined {joined}
             </p>

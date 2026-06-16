@@ -52,4 +52,6 @@ export interface ProfileUser {
   bio: string | null
   created_at: string
   post_count: number
+  follower_count: number
+  following_count: number
 }
