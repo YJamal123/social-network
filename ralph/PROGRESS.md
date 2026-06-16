@@ -15,7 +15,7 @@ COMPLETE` the exact first line of this file and commit.
 
 ## User search / directory
 - [x] 6. `/directory` page (server component): list users, `?q=` filters by `username ILIKE`, each row shows avatar/username/bio + a `FollowButton` (per-row follow state; none for self).
-- [ ] 7. Search input client component submitting to `/directory?q=...`, and a "Directory" link in `SiteHeader`.
+- [x] 7. Search input client component submitting to `/directory?q=...`, and a "Directory" link in `SiteHeader`.
 
 ## The Poke
 - [ ] 8. `poke(targetId)` server action (upsert, ignore self-poke, revalidate) + helpers to count unacknowledged pokes and list pokers.

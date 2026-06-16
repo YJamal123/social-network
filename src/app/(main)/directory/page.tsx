@@ -2,6 +2,7 @@ import Link from "next/link"
 import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { FollowButton } from "@/components/FollowButton"
+import { DirectorySearch } from "@/components/DirectorySearch"
 
 interface DirectoryRow {
   id: string
@@ -43,6 +44,8 @@ export default async function DirectoryPage({
   return (
     <main className="mx-auto max-w-2xl p-6">
       <h1 className="mb-6 text-2xl font-bold">Directory</h1>
+
+      <DirectorySearch initialQuery={q} />
 
       <div className="space-y-3">
         {users.length === 0 ? (

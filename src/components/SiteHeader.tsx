@@ -14,6 +14,9 @@ export async function SiteHeader() {
           SML
         </Link>
         <div className="flex items-center gap-3 text-sm text-gray-500">
+          <Link href="/directory" className="hover:underline">
+            Directory
+          </Link>
           {username && (
             <Link href={`/profile/${username}`} className="hover:underline">
               {username}
