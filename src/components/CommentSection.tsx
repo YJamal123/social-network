@@ -98,7 +98,7 @@ export function CommentSection({
             >
               <div className="mb-0.5 flex items-center justify-between gap-2">
                 <span className="text-label-bold text-primary">{comment.username}</span>
-                <span className="text-body-sm text-outline">
+                <span className="text-body-sm text-on-surface-variant">
                   {timeAgo(comment.created_at)}
                 </span>
               </div>

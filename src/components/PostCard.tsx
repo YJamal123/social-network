@@ -21,7 +21,7 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
               >
                 {post.username}
               </Link>
-              <span className="shrink-0 text-body-sm text-outline">
+              <span className="shrink-0 text-body-sm text-on-surface-variant">
                 {timeAgo(post.created_at)}
               </span>
             </div>

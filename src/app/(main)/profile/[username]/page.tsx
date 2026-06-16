@@ -224,7 +224,7 @@ export default async function ProfilePage({
                     >
                       {wp.author_username}
                     </Link>
-                    <span className="shrink-0 text-[10px] text-outline">
+                    <span className="shrink-0 text-[10px] text-on-surface-variant">
                       {timeAgo(wp.created_at)}
                     </span>
                   </div>
