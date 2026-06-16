@@ -23,7 +23,7 @@ COMPLETE` the exact first line of this file and commit.
 - [x] 10. Unacknowledged-poke indicator in `SiteHeader` + a `/pokes` page (who poked you, "Poke back" that pokes them and acknowledges theirs).
 
 ## Profile fields
-- [ ] 11. Profile page displays `relationship_status`/`interests`/`courses` (when set); `ProfileEditForm` + `updateProfile` let the owner edit them.
+- [x] 11. Profile page displays `relationship_status`/`interests`/`courses` (when set); `ProfileEditForm` + `updateProfile` let the owner edit them.
 
 ## Demo seed + wrap-up
 - [ ] 12. Extend `src/app/api/seed/route.ts`: demo `relationship_status`/`interests`/`courses`, a set of `wall_posts` (author ≠ owner), some `pokes` (a few unacknowledged); include `wallPosts` + `pokes` in the returned counts; keep it in the existing idempotent transaction.

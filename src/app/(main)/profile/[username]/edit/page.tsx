@@ -14,15 +14,26 @@ export default async function EditProfilePage({
     redirect(`/profile/${params.username}`)
   }
 
-  const result = await query<{ bio: string | null }>(
-    "SELECT bio FROM users WHERE id = $1",
+  const result = await query<{
+    bio: string | null
+    relationship_status: string | null
+    interests: string | null
+    courses: string | null
+  }>(
+    "SELECT bio, relationship_status, interests, courses FROM users WHERE id = $1",
     [session.user.id]
   )
-  const bio = result.rows[0]?.bio ?? ""
+  const row = result.rows[0]
 
   return (
     <main className="mx-auto max-w-2xl p-6">
-      <ProfileEditForm username={params.username} initialBio={bio} />
+      <ProfileEditForm
+        username={params.username}
+        initialBio={row?.bio ?? ""}
+        initialRelationshipStatus={row?.relationship_status ?? ""}
+        initialInterests={row?.interests ?? ""}
+        initialCourses={row?.courses ?? ""}
+      />
     </main>
   )
 }

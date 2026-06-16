@@ -10,8 +10,11 @@ import type { WallPostWithAuthor } from "@/lib/types"
 export type ProfileState = { error?: string }
 
 const MAX_BIO = 280
+const MAX_RELATIONSHIP = 50
+const MAX_INTERESTS = 280
+const MAX_COURSES = 280
 
-// Bio-only edit. Username is intentionally not editable here: it's baked into
+// Profile edit. Username is intentionally not editable here: it's baked into
 // the JWT (session.user.name) and would go stale until re-login.
 export async function updateProfile(
   _prev: ProfileState,
@@ -27,11 +30,41 @@ export async function updateProfile(
     return { error: `Bio must be ${MAX_BIO} characters or fewer` }
   }
 
+  const relationshipStatus = (
+    (formData.get("relationship_status") as string) ?? ""
+  ).trim()
+  if (relationshipStatus.length > MAX_RELATIONSHIP) {
+    return {
+      error: `Relationship status must be ${MAX_RELATIONSHIP} characters or fewer`,
+    }
+  }
+
+  const interests = ((formData.get("interests") as string) ?? "").trim()
+  if (interests.length > MAX_INTERESTS) {
+    return { error: `Interests must be ${MAX_INTERESTS} characters or fewer` }
+  }
+
+  const courses = ((formData.get("courses") as string) ?? "").trim()
+  if (courses.length > MAX_COURSES) {
+    return { error: `Courses must be ${MAX_COURSES} characters or fewer` }
+  }
+
   try {
-    await query("UPDATE users SET bio = $1 WHERE id = $2", [
-      bio || null,
-      session.user.id,
-    ])
+    await query(
+      `UPDATE users
+          SET bio = $1,
+              relationship_status = $2,
+              interests = $3,
+              courses = $4
+        WHERE id = $5`,
+      [
+        bio || null,
+        relationshipStatus || null,
+        interests || null,
+        courses || null,
+        session.user.id,
+      ]
+    )
   } catch (err) {
     console.error("Update profile failed:", err)
     return { error: "Failed to update profile" }

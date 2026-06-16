@@ -5,13 +5,22 @@ import Link from "next/link"
 import { updateProfile } from "@/app/(main)/profile/actions"
 
 const MAX_BIO = 280
+const MAX_RELATIONSHIP = 50
+const MAX_INTERESTS = 280
+const MAX_COURSES = 280
 
 export function ProfileEditForm({
   username,
   initialBio,
+  initialRelationshipStatus,
+  initialInterests,
+  initialCourses,
 }: {
   username: string
   initialBio: string
+  initialRelationshipStatus: string
+  initialInterests: string
+  initialCourses: string
 }) {
   const [state, formAction] = useFormState(updateProfile, {})
 
@@ -34,6 +43,42 @@ export function ProfileEditForm({
           maxLength={MAX_BIO}
           rows={4}
           placeholder="Tell people about yourself"
+          className="mt-1 w-full resize-none rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </label>
+
+      <label className="block text-sm font-medium text-gray-700">
+        Relationship status
+        <input
+          type="text"
+          name="relationship_status"
+          defaultValue={initialRelationshipStatus}
+          maxLength={MAX_RELATIONSHIP}
+          placeholder="e.g. Single, In a relationship, It's complicated"
+          className="mt-1 w-full rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </label>
+
+      <label className="block text-sm font-medium text-gray-700">
+        Interests
+        <textarea
+          name="interests"
+          defaultValue={initialInterests}
+          maxLength={MAX_INTERESTS}
+          rows={2}
+          placeholder="Music, movies, books…"
+          className="mt-1 w-full resize-none rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </label>
+
+      <label className="block text-sm font-medium text-gray-700">
+        Courses
+        <textarea
+          name="courses"
+          defaultValue={initialCourses}
+          maxLength={MAX_COURSES}
+          rows={2}
+          placeholder="Classes you're taking"
           className="mt-1 w-full resize-none rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </label>

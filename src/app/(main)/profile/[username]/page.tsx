@@ -12,7 +12,8 @@ import type { PostWithAuthor, ProfileUser } from "@/lib/types"
 
 async function getProfile(username: string): Promise<ProfileUser | null> {
   const result = await query<ProfileUser>(
-    `SELECT u.id, u.username, u.bio, u.created_at,
+    `SELECT u.id, u.username, u.bio, u.relationship_status, u.interests,
+            u.courses, u.created_at,
             (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count,
             (SELECT COUNT(*)::int FROM follows f WHERE f.following_id = u.id) AS follower_count,
             (SELECT COUNT(*)::int FROM follows f WHERE f.follower_id = u.id) AS following_count
@@ -127,6 +128,38 @@ export default async function ProfilePage({
               {profile.post_count} {profile.post_count === 1 ? "post" : "posts"} ·
               Joined {joined}
             </p>
+            {(profile.relationship_status ||
+              profile.interests ||
+              profile.courses) && (
+              <dl className="mt-3 space-y-1 text-sm">
+                {profile.relationship_status && (
+                  <div className="flex gap-2">
+                    <dt className="font-semibold text-gray-700">
+                      Relationship status
+                    </dt>
+                    <dd className="break-words text-gray-600">
+                      {profile.relationship_status}
+                    </dd>
+                  </div>
+                )}
+                {profile.interests && (
+                  <div className="flex gap-2">
+                    <dt className="font-semibold text-gray-700">Interests</dt>
+                    <dd className="break-words text-gray-600">
+                      {profile.interests}
+                    </dd>
+                  </div>
+                )}
+                {profile.courses && (
+                  <div className="flex gap-2">
+                    <dt className="font-semibold text-gray-700">Courses</dt>
+                    <dd className="break-words text-gray-600">
+                      {profile.courses}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            )}
           </div>
         </div>
       </section>
