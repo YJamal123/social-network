@@ -14,18 +14,18 @@ export function DirectorySearch({ initialQuery }: { initialQuery: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mb-6 flex gap-2">
+    <form onSubmit={handleSubmit} className="flex items-center gap-stack-md">
       <input
         type="text"
         name="q"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search by username…"
-        className="w-full rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Search by name, major, or interest…"
+        className="w-full rounded border border-outline-variant bg-white px-3 py-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
       />
       <button
         type="submit"
-        className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        className="shrink-0 rounded bg-primary px-6 py-2 text-label-bold text-on-primary transition-opacity hover:opacity-90"
       >
         Search
       </button>

@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { FollowButton } from "@/components/FollowButton"
 import { DirectorySearch } from "@/components/DirectorySearch"
+import { Panel } from "@/components/Panel"
 
 interface DirectoryRow {
   id: string
@@ -42,55 +43,76 @@ export default async function DirectoryPage({
   const users = await getUsers(viewerId, q)
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <h1 className="mb-6 text-2xl font-bold">Directory</h1>
+    <main className="mx-auto flex max-w-container-max flex-col gap-gutter px-gutter py-stack-lg">
+      <Panel title="search the network">
+        <DirectorySearch initialQuery={q} />
+      </Panel>
 
-      <DirectorySearch initialQuery={q} />
-
-      <div className="space-y-3">
+      <Panel
+        title="Directory Results"
+        action={
+          <span className="text-[10px] text-white opacity-80">
+            {users.length} {users.length === 1 ? "result" : "results"}
+          </span>
+        }
+        bodyClassName=""
+      >
         {users.length === 0 ? (
-          <p className="py-8 text-center text-gray-400">
-            {q ? `No users match "${q}".` : "No users yet."}
-          </p>
-        ) : (
-          users.map((u) => {
-            const isSelf = viewerId === u.id
-            return (
-              <div
-                key={u.id}
-                className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+          <div className="flex flex-col items-center gap-stack-md p-12 text-center">
+            <span className="material-symbols-outlined text-4xl text-outline-variant">
+              person_search
+            </span>
+            <p className="text-label-bold text-secondary">
+              {q ? `No users match “${q}”.` : "No users yet."}
+            </p>
+            {q && (
+              <Link
+                href="/directory"
+                className="bracket-link text-action-link text-primary hover:underline"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-lg font-semibold text-white">
-                  {u.username.charAt(0).toUpperCase()}
+                clear search
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-px bg-outline-variant sm:grid-cols-2">
+            {users.map((u) => {
+              const isSelf = viewerId === u.id
+              return (
+                <div
+                  key={u.id}
+                  className="flex gap-3 bg-white p-panel-padding transition-colors hover:bg-surface-container"
+                >
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border border-outline-variant bg-primary-container text-2xl font-bold text-white">
+                    {u.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-grow">
+                    <Link
+                      href={`/profile/${u.username}`}
+                      className="block truncate text-label-bold text-primary hover:underline"
+                    >
+                      {u.username}
+                    </Link>
+                    {u.bio ? (
+                      <p className="mb-2 truncate text-body-sm text-on-surface-variant">
+                        {u.bio}
+                      </p>
+                    ) : (
+                      <p className="mb-2 text-body-sm italic text-outline">No bio yet.</p>
+                    )}
+                    {viewerId && !isSelf && (
+                      <FollowButton
+                        targetUserId={u.id}
+                        initialFollowing={u.followed_by_me}
+                      />
+                    )}
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/profile/${u.username}`}
-                    className="font-semibold text-gray-800 hover:underline"
-                  >
-                    {u.username}
-                  </Link>
-                  {u.bio ? (
-                    <p className="mt-0.5 truncate text-sm text-gray-600">
-                      {u.bio}
-                    </p>
-                  ) : (
-                    <p className="mt-0.5 text-sm italic text-gray-400">
-                      No bio yet.
-                    </p>
-                  )}
-                </div>
-                {viewerId && !isSelf && (
-                  <FollowButton
-                    targetUserId={u.id}
-                    initialFollowing={u.followed_by_me}
-                  />
-                )}
-              </div>
-            )
-          })
+              )
+            })}
+          </div>
         )}
-      </div>
+      </Panel>
     </main>
   )
 }
