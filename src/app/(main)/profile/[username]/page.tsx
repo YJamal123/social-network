@@ -105,7 +105,7 @@ export default async function ProfilePage({
     <main className="mx-auto flex max-w-container-max flex-col gap-gutter px-gutter py-stack-lg md:flex-row">
       {/* Left rail */}
       <aside className="flex w-full shrink-0 flex-col gap-stack-lg md:w-52">
-        <div className="border border-outline-variant bg-surface-container-lowest p-panel-padding shadow-sm">
+        <div className="rounded-lg bg-surface-container-lowest p-panel-padding shadow">
           <div className="mb-2 flex aspect-square items-center justify-center rounded border-2 border-primary bg-primary-container text-6xl font-bold text-white">
             {profile.username.charAt(0).toUpperCase()}
           </div>
@@ -145,9 +145,9 @@ export default async function ProfilePage({
       {/* Right column */}
       <div className="flex min-w-0 flex-1 flex-col gap-stack-lg">
         {/* Header */}
-        <div className="flex flex-col justify-between gap-4 border border-outline-variant bg-surface-container-lowest p-4 shadow-sm sm:flex-row sm:items-center">
+        <div className="flex flex-col justify-between gap-4 rounded-lg bg-surface-container-lowest p-4 shadow sm:flex-row sm:items-center">
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold text-primary">
+            <h1 className="truncate text-title-lg text-primary">
               {profile.username}
             </h1>
             <div className="text-body-sm text-secondary">Joined {joined}</div>
@@ -168,7 +168,7 @@ export default async function ProfilePage({
             isOwnProfile && (
               <Link
                 href={`/profile/${profile.username}/edit`}
-                className="bracket-link text-action-link text-white hover:underline"
+                className="bracket-link text-action-link text-primary hover:underline"
               >
                 edit
               </Link>

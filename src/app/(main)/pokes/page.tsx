@@ -17,9 +17,7 @@ export default async function PokesPage() {
         bodyClassName=""
         action={
           pokers.length > 0 ? (
-            <span className="text-[10px] text-white opacity-80">
-              {pokers.length} new
-            </span>
+            <span className="text-caption text-outline">{pokers.length} new</span>
           ) : undefined
         }
       >

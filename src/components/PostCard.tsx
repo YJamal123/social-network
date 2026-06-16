@@ -8,7 +8,7 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
   const initial = post.username.charAt(0).toUpperCase()
 
   return (
-    <article className="overflow-hidden border border-outline-variant bg-surface-container-lowest shadow-sm">
+    <article className="overflow-hidden rounded-lg bg-surface-container-lowest shadow">
       <div className="p-panel-padding">
         <div className="flex gap-stack-lg">
           <Link

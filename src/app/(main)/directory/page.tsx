@@ -51,7 +51,7 @@ export default async function DirectoryPage({
       <Panel
         title="Directory Results"
         action={
-          <span className="text-[10px] text-white opacity-80">
+          <span className="text-caption text-outline">
             {users.length} {users.length === 1 ? "result" : "results"}
           </span>
         }

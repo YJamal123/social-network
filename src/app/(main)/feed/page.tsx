@@ -98,10 +98,11 @@ export default async function FeedPage() {
       </aside>
 
       <section className="flex flex-col gap-stack-lg md:col-span-8 lg:col-span-9">
+        <h1 className="text-title-lg text-on-surface">Feed</h1>
         <PostForm />
         <div className="flex flex-col gap-stack-lg">
           {posts.length === 0 ? (
-            <div className="border border-outline-variant bg-surface-container-lowest p-8 text-center text-body-base text-outline shadow-sm">
+            <div className="rounded-lg bg-surface-container-lowest p-8 text-center text-body-base text-outline shadow">
               No posts yet. Be the first to say something.
             </div>
           ) : (

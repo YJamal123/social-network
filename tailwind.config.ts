@@ -51,8 +51,10 @@ const config: Config = {
         sans: ["var(--font-libre-franklin)", "Libre Franklin", "sans-serif"],
       },
       fontSize: {
+        caption: ["10px", { lineHeight: "14px", fontWeight: "400" }],
         "body-sm": ["11px", { lineHeight: "14px", fontWeight: "400" }],
         "body-base": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+        "title-lg": ["20px", { lineHeight: "26px", fontWeight: "700" }],
         "label-bold": ["12px", { lineHeight: "14px", fontWeight: "700" }],
         "section-header": ["12px", { lineHeight: "16px", fontWeight: "700" }],
         "action-link": [
