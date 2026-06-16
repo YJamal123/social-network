@@ -40,3 +40,45 @@ export async function updateProfile(
   // redirect() throws internally — must live outside the try/catch
   redirect(`/profile/${username}`)
 }
+
+export type FollowState = { error?: string }
+
+// Toggle following a user: insert if not following, delete if following.
+// Self-follow is silently ignored. Revalidates the feed and profile pages.
+export async function toggleFollow(targetUserId: string): Promise<FollowState> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: "You must be logged in" }
+  }
+
+  const followerId = session.user.id
+  if (followerId === targetUserId) {
+    // Ignore self-follow — not an error, just a no-op.
+    return {}
+  }
+
+  try {
+    const existing = await query(
+      "SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = $2",
+      [followerId, targetUserId]
+    )
+    if (existing.rowCount && existing.rowCount > 0) {
+      await query(
+        "DELETE FROM follows WHERE follower_id = $1 AND following_id = $2",
+        [followerId, targetUserId]
+      )
+    } else {
+      await query(
+        "INSERT INTO follows (follower_id, following_id) VALUES ($1, $2)",
+        [followerId, targetUserId]
+      )
+    }
+  } catch (err) {
+    console.error("Toggle follow failed:", err)
+    return { error: "Failed to update follow" }
+  }
+
+  revalidatePath("/feed")
+  revalidatePath("/profile/[username]", "page")
+  return {}
+}
