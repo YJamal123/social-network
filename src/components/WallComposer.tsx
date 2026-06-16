@@ -29,7 +29,7 @@ export function WallComposer({ ownerId }: { ownerId: string }) {
     <form
       ref={formRef}
       onSubmit={handleSubmit}
-      className="mb-6 space-y-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+      className="mb-4 rounded bg-surface-container-low p-2"
     >
       <textarea
         name="content"
@@ -39,19 +39,19 @@ export function WallComposer({ ownerId }: { ownerId: string }) {
         rows={3}
         required
         placeholder="Write something…"
-        className="w-full resize-none rounded border border-gray-300 bg-white p-2 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="min-h-[60px] w-full resize-none rounded border border-outline-variant bg-white p-2 text-body-base text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
       />
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-body-sm text-error">{error}</p>}
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400">
+      <div className="mt-2 flex items-center justify-between">
+        <span className="text-body-sm text-outline">
           {content.length}/{MAX}
         </span>
         <button
           type="submit"
           disabled={pending || content.trim().length === 0}
-          className="rounded bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded bg-primary px-3 py-1 text-label-bold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {pending ? "Posting…" : "Post"}
         </button>

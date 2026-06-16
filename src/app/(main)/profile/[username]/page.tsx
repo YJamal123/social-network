@@ -6,6 +6,7 @@ import { PostCard } from "@/components/PostCard"
 import { FollowButton } from "@/components/FollowButton"
 import { PokeButton } from "@/components/PokeButton"
 import { WallComposer } from "@/components/WallComposer"
+import { Panel } from "@/components/Panel"
 import { getWallPosts } from "@/app/(main)/profile/actions"
 import { timeAgo } from "@/lib/time"
 import type { PostWithAuthor, ProfileUser } from "@/lib/types"
@@ -56,6 +57,26 @@ async function getUserPosts(
   return result.rows
 }
 
+function Stat({ n, label }: { n: number; label: string }) {
+  return (
+    <div>
+      <div className="font-bold text-primary">{n}</div>
+      <div className="text-[10px] uppercase tracking-wide text-outline">{label}</div>
+    </div>
+  )
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <dt className="text-body-sm text-secondary">{label}</dt>
+      <dd className="col-span-2 whitespace-pre-wrap break-words text-body-sm text-on-surface">
+        {value}
+      </dd>
+    </>
+  )
+}
+
 export default async function ProfilePage({
   params,
 }: {
@@ -77,135 +98,156 @@ export default async function ProfilePage({
     month: "long",
     year: "numeric",
   })
+  const hasExtra =
+    profile.relationship_status || profile.interests || profile.courses
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
-      <section className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-start gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-2xl font-semibold text-white">
+    <main className="mx-auto flex max-w-container-max flex-col gap-gutter px-gutter py-stack-lg md:flex-row">
+      {/* Left rail */}
+      <aside className="flex w-full shrink-0 flex-col gap-stack-lg md:w-52">
+        <div className="border border-outline-variant bg-surface-container-lowest p-panel-padding shadow-sm">
+          <div className="mb-2 flex aspect-square items-center justify-center rounded border-2 border-primary bg-primary-container text-6xl font-bold text-white">
             {profile.username.charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <h1 className="truncate text-2xl font-bold">{profile.username}</h1>
-              {isOwnProfile ? (
-                <Link
-                  href={`/profile/${profile.username}/edit`}
-                  className="shrink-0 rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Edit profile
-                </Link>
-              ) : (
-                session?.user?.id && (
-                  <div className="flex shrink-0 items-center gap-2">
-                    <PokeButton targetUserId={profile.id} />
-                    <FollowButton
-                      targetUserId={profile.id}
-                      initialFollowing={following}
-                    />
-                  </div>
-                )
-              )}
+          {isOwnProfile && (
+            <div className="text-center">
+              <Link
+                href={`/profile/${profile.username}/edit`}
+                className="bracket-link text-action-link text-primary hover:underline"
+              >
+                edit
+              </Link>
             </div>
+          )}
+        </div>
+
+        {!isOwnProfile && session?.user?.id && (
+          <Panel title="Connection">
+            <div className="flex flex-col gap-2">
+              {following && (
+                <div className="flex items-center gap-1 text-body-sm text-on-surface">
+                  <span className="material-symbols-outlined text-base">check_circle</span>
+                  Following
+                </div>
+              )}
+              <div className="flex gap-2">
+                <FollowButton
+                  targetUserId={profile.id}
+                  initialFollowing={following}
+                />
+                <PokeButton targetUserId={profile.id} />
+              </div>
+            </div>
+          </Panel>
+        )}
+      </aside>
+
+      {/* Right column */}
+      <div className="flex min-w-0 flex-1 flex-col gap-stack-lg">
+        {/* Header */}
+        <div className="flex flex-col justify-between gap-4 border border-outline-variant bg-surface-container-lowest p-4 shadow-sm sm:flex-row sm:items-center">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold text-primary">
+              {profile.username}
+            </h1>
+            <div className="text-body-sm text-secondary">Joined {joined}</div>
+          </div>
+          <div className="flex shrink-0 items-center gap-4 text-center">
+            <Stat n={profile.follower_count} label="followers" />
+            <div className="h-8 border-l border-outline-variant" />
+            <Stat n={profile.following_count} label="following" />
+            <div className="h-8 border-l border-outline-variant" />
+            <Stat n={profile.post_count} label="posts" />
+          </div>
+        </div>
+
+        {/* Information */}
+        <Panel
+          title="Information"
+          action={
+            isOwnProfile && (
+              <Link
+                href={`/profile/${profile.username}/edit`}
+                className="bracket-link text-action-link text-white hover:underline"
+              >
+                edit
+              </Link>
+            )
+          }
+        >
+          <div className="flex flex-col gap-3">
             {profile.bio ? (
-              <p className="mt-1 whitespace-pre-wrap break-words text-gray-700">
+              <p className="whitespace-pre-wrap break-words text-body-base text-on-surface">
                 {profile.bio}
               </p>
             ) : (
-              <p className="mt-1 text-sm italic text-gray-400">No bio yet.</p>
+              <p className="text-body-sm italic text-outline">No bio yet.</p>
             )}
-            <p className="mt-3 text-sm text-gray-500">
-              <span className="font-semibold text-gray-700">
-                {profile.follower_count}
-              </span>{" "}
-              {profile.follower_count === 1 ? "follower" : "followers"} ·{" "}
-              <span className="font-semibold text-gray-700">
-                {profile.following_count}
-              </span>{" "}
-              following
-            </p>
-            <p className="mt-1 text-sm text-gray-500">
-              {profile.post_count} {profile.post_count === 1 ? "post" : "posts"} ·
-              Joined {joined}
-            </p>
-            {(profile.relationship_status ||
-              profile.interests ||
-              profile.courses) && (
-              <dl className="mt-3 space-y-1 text-sm">
+            {hasExtra && (
+              <dl className="grid grid-cols-3 gap-2">
                 {profile.relationship_status && (
-                  <div className="flex gap-2">
-                    <dt className="font-semibold text-gray-700">
-                      Relationship status
-                    </dt>
-                    <dd className="break-words text-gray-600">
-                      {profile.relationship_status}
-                    </dd>
-                  </div>
+                  <InfoRow
+                    label="Relationship Status"
+                    value={profile.relationship_status}
+                  />
                 )}
                 {profile.interests && (
-                  <div className="flex gap-2">
-                    <dt className="font-semibold text-gray-700">Interests</dt>
-                    <dd className="break-words text-gray-600">
-                      {profile.interests}
-                    </dd>
-                  </div>
+                  <InfoRow label="Interests" value={profile.interests} />
                 )}
                 {profile.courses && (
-                  <div className="flex gap-2">
-                    <dt className="font-semibold text-gray-700">Courses</dt>
-                    <dd className="break-words text-gray-600">
-                      {profile.courses}
-                    </dd>
-                  </div>
+                  <InfoRow label="Courses" value={profile.courses} />
                 )}
               </dl>
             )}
           </div>
-        </div>
-      </section>
+        </Panel>
 
-      <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold text-gray-800">Wall</h2>
-        {session?.user?.id && <WallComposer ownerId={profile.id} />}
-        <div className="space-y-3">
+        {/* The Wall */}
+        <Panel title="The Wall">
+          {session?.user?.id && <WallComposer ownerId={profile.id} />}
           {wallPosts.length === 0 ? (
-            <p className="py-6 text-center text-gray-400">
+            <p className="py-4 text-center text-body-sm text-outline">
               Nothing on the wall yet.
             </p>
           ) : (
-            wallPosts.map((wp) => (
-              <div
-                key={wp.id}
-                className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
-              >
-                <p className="text-sm text-gray-500">
-                  <Link
-                    href={`/profile/${wp.author_username}`}
-                    className="font-semibold text-gray-700 hover:underline"
-                  >
-                    {wp.author_username}
-                  </Link>{" "}
-                  · {timeAgo(wp.created_at)}
-                </p>
-                <p className="mt-1 whitespace-pre-wrap break-words text-gray-800">
-                  {wp.content}
-                </p>
-              </div>
-            ))
+            <div className="flex flex-col gap-4">
+              {wallPosts.map((wp) => (
+                <div
+                  key={wp.id}
+                  className="border-b border-outline-variant pb-3 last:border-0 last:pb-0"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <Link
+                      href={`/profile/${wp.author_username}`}
+                      className="text-body-sm font-bold text-primary hover:underline"
+                    >
+                      {wp.author_username}
+                    </Link>
+                    <span className="shrink-0 text-[10px] text-outline">
+                      {timeAgo(wp.created_at)}
+                    </span>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-body-base text-on-surface">
+                    {wp.content}
+                  </p>
+                </div>
+              ))}
+            </div>
           )}
-        </div>
-      </section>
+        </Panel>
 
-      <section>
-        <h2 className="mb-3 text-lg font-semibold text-gray-800">Posts</h2>
-        <div className="space-y-3">
+        {/* Posts */}
+        <section className="flex flex-col gap-stack-md">
+          <h2 className="border-b border-outline-variant pb-1 text-section-header text-primary">
+            {profile.username}&apos;s posts
+          </h2>
           {posts.length === 0 ? (
-            <p className="py-8 text-center text-gray-400">No posts yet.</p>
+            <p className="py-4 text-center text-body-sm text-outline">No posts yet.</p>
           ) : (
             posts.map((post) => <PostCard key={post.id} post={post} />)
           )}
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
   )
 }
