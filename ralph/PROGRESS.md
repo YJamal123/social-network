@@ -1,3 +1,5 @@
+RALPH COMPLETE
+
 # Roadmap Progress — Phases 2–6 (cleaner UI + code quality)
 
 Derived from `.claude/IMPROVEMENT-ROADMAP.md`. Phase 1 is already done. Each
@@ -35,4 +37,4 @@ the exact first line of this file and commit.
 - [x] 19. Move the inline `DirectoryRow` type from `directory/page.tsx` into `src/lib/types.ts`.
 
 ## Wrap-up
-- [ ] 20. Final pass: `npx tsc --noEmit` + `npm run build` clean; self-review all changes against the three skills and the roadmap guardrails; confirm coral is only on like/poke and no `"use client"` leaked into a page; then mark complete.
+- [x] 20. Final pass: `npx tsc --noEmit` + `npm run build` clean; self-review all changes against the three skills and the roadmap guardrails; confirm coral is only on like/poke and no `"use client"` leaked into a page; then mark complete.
