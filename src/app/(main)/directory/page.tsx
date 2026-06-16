@@ -5,6 +5,7 @@ import { FollowButton } from "@/components/FollowButton"
 import { DirectorySearch } from "@/components/DirectorySearch"
 import { Panel } from "@/components/Panel"
 import { Avatar } from "@/components/Avatar"
+import { EmptyState } from "@/components/EmptyState"
 
 interface DirectoryRow {
   id: string
@@ -59,13 +60,10 @@ export default async function DirectoryPage({
         bodyClassName=""
       >
         {users.length === 0 ? (
-          <div className="flex flex-col items-center gap-stack-md p-12 text-center">
-            <span className="material-symbols-outlined text-4xl text-outline-variant">
-              person_search
-            </span>
-            <p className="text-label-bold text-secondary">
-              {q ? `No users match “${q}”.` : "No users yet."}
-            </p>
+          <EmptyState
+            icon="person_search"
+            message={q ? `No users match “${q}”.` : "No users yet."}
+          >
             {q && (
               <Link
                 href="/directory"
@@ -74,7 +72,7 @@ export default async function DirectoryPage({
                 clear search
               </Link>
             )}
-          </div>
+          </EmptyState>
         ) : (
           <div className="grid grid-cols-1 gap-px bg-outline-variant sm:grid-cols-2">
             {users.map((u) => {

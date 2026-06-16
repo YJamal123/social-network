@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { PostForm } from "@/components/PostForm"
 import { PostCard } from "@/components/PostCard"
 import { Panel } from "@/components/Panel"
+import { EmptyState } from "@/components/EmptyState"
 import { buttonClass } from "@/lib/ui"
 import type { PostWithAuthor } from "@/lib/types"
 
@@ -104,9 +105,10 @@ export default async function FeedPage() {
         <PostForm />
         <div className="flex flex-col gap-stack-lg">
           {posts.length === 0 ? (
-            <div className="rounded-lg bg-surface-container-lowest p-8 text-center text-body-base text-outline shadow">
-              No posts yet. Be the first to say something.
-            </div>
+            <EmptyState
+              icon="forum"
+              message="No posts yet. Be the first to say something."
+            />
           ) : (
             posts.map((post) => <PostCard key={post.id} post={post} />)
           )}

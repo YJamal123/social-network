@@ -8,6 +8,7 @@ import { PokeButton } from "@/components/PokeButton"
 import { WallComposer } from "@/components/WallComposer"
 import { Panel } from "@/components/Panel"
 import { Avatar } from "@/components/Avatar"
+import { EmptyState } from "@/components/EmptyState"
 import { getWallPosts } from "@/app/(main)/profile/actions"
 import { timeAgo } from "@/lib/time"
 import type { PostWithAuthor, ProfileUser } from "@/lib/types"
@@ -207,9 +208,7 @@ export default async function ProfilePage({
         <Panel title="The Wall">
           {session?.user?.id && <WallComposer ownerId={profile.id} />}
           {wallPosts.length === 0 ? (
-            <p className="py-4 text-center text-body-sm text-outline">
-              Nothing on the wall yet.
-            </p>
+            <EmptyState icon="sticky_note_2" message="Nothing on the wall yet." />
           ) : (
             <div className="flex flex-col gap-4">
               {wallPosts.map((wp) => (
@@ -243,7 +242,7 @@ export default async function ProfilePage({
             {profile.username}&apos;s posts
           </h2>
           {posts.length === 0 ? (
-            <p className="py-4 text-center text-body-sm text-outline">No posts yet.</p>
+            <EmptyState icon="article" message="No posts yet." />
           ) : (
             posts.map((post) => <PostCard key={post.id} post={post} />)
           )}

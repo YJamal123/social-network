@@ -4,6 +4,7 @@ import { PokeBackButton } from "@/components/PokeBackButton"
 import { PokesAck } from "@/components/PokesAck"
 import { Panel } from "@/components/Panel"
 import { Avatar } from "@/components/Avatar"
+import { EmptyState } from "@/components/EmptyState"
 import { getPokers } from "./actions"
 
 export default async function PokesPage() {
@@ -23,12 +24,7 @@ export default async function PokesPage() {
         }
       >
         {pokers.length === 0 ? (
-          <div className="flex flex-col items-center gap-stack-md p-12 text-center">
-            <span className="material-symbols-outlined text-4xl text-outline-variant">
-              touch_app
-            </span>
-            <p className="text-label-bold text-secondary">No one has poked you yet.</p>
-          </div>
+          <EmptyState icon="touch_app" message="No one has poked you yet." />
         ) : (
           <div className="flex flex-col">
             {pokers.map((p) => (

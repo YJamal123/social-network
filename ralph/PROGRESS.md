@@ -25,7 +25,7 @@ the exact first line of this file and commit.
 - [x] 13. Raise contrast: body/meta text that must be read (e.g. comment/Wall timestamps doubling as meta) moves from `text-outline` to `text-on-surface-variant`; reserve `text-outline` for de-emphasized meta only.
 
 ## Phase 5 — Composite primitives + token cleanup
-- [ ] 14. Create `src/components/EmptyState.tsx` (icon + muted message, the directory pattern) and adopt it for the feed, profile posts, the Wall, and pokes empty states.
+- [x] 14. Create `src/components/EmptyState.tsx` (icon + muted message, the directory pattern) and adopt it for the feed, profile posts, the Wall, and pokes empty states.
 - [ ] 15. Create `src/components/UserRow.tsx` (Avatar `sm` + name `<Link>` + muted subtitle + trailing `action?: ReactNode`) and use it in `directory/page.tsx` and `pokes/page.tsx`.
 - [ ] 16. Create `src/components/UserNameTime.tsx` (name link + `timeAgo`) and use it in `PostCard.tsx`, the Wall list in `profile/[username]/page.tsx`, and `CommentSection.tsx`.
 - [ ] 17. Retire arbitrary values using tokens (`text-[10px]` → `caption`; `min-w-[1.1rem]`, `min-h-[60px]`, `w-28` → named spacing tokens added to config). Bump primary content cards (PostCard, profile Information/Wall) toward `p-4`, and widen the feed two-column gap slightly. Confirm coral is only on like/poke.
