@@ -16,7 +16,7 @@ verify (`tsc` + `build`), commit, tick it. When all are checked, prepend a line
 
 ## 6b — Likes
 - [x] 7. `toggleLike(postId)` server action (insert/delete, revalidate).
-- [ ] 8. Extend feed AND profile post queries with `like_count` + `liked_by_me` for the current user.
+- [x] 8. Extend feed AND profile post queries with `like_count` + `liked_by_me` for the current user.
 - [ ] 9. `LikeButton` client component (heart + count, optimistic), integrated into `PostCard`.
 
 ## 6c — Comments

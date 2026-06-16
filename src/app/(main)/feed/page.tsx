@@ -11,7 +11,11 @@ async function getPosts(userId: string): Promise<PostWithAuthor[]> {
     `WITH my_follows AS (
        SELECT following_id FROM follows WHERE follower_id = $1
      )
-     SELECT p.id, p.user_id, p.content, p.created_at, u.username
+     SELECT p.id, p.user_id, p.content, p.created_at, u.username,
+            (SELECT COUNT(*)::int FROM likes l WHERE l.post_id = p.id) AS like_count,
+            EXISTS (
+              SELECT 1 FROM likes l WHERE l.post_id = p.id AND l.user_id = $1
+            ) AS liked_by_me
        FROM posts p
        JOIN users u ON u.id = p.user_id
       WHERE NOT EXISTS (SELECT 1 FROM my_follows)

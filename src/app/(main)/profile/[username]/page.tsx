@@ -30,15 +30,22 @@ async function isFollowing(
   return Boolean(result.rowCount && result.rowCount > 0)
 }
 
-async function getUserPosts(userId: string): Promise<PostWithAuthor[]> {
+async function getUserPosts(
+  userId: string,
+  viewerId: string | null
+): Promise<PostWithAuthor[]> {
   const result = await query<PostWithAuthor>(
-    `SELECT p.id, p.user_id, p.content, p.created_at, u.username
+    `SELECT p.id, p.user_id, p.content, p.created_at, u.username,
+            (SELECT COUNT(*)::int FROM likes l WHERE l.post_id = p.id) AS like_count,
+            EXISTS (
+              SELECT 1 FROM likes l WHERE l.post_id = p.id AND l.user_id = $2
+            ) AS liked_by_me
        FROM posts p
        JOIN users u ON u.id = p.user_id
       WHERE p.user_id = $1
       ORDER BY p.created_at DESC
       LIMIT 50`,
-    [userId]
+    [userId, viewerId]
   )
   return result.rows
 }
@@ -57,7 +64,7 @@ export default async function ProfilePage({
     session?.user?.id && !isOwnProfile
       ? await isFollowing(session.user.id, profile.id)
       : false
-  const posts = await getUserPosts(profile.id)
+  const posts = await getUserPosts(profile.id, session?.user?.id ?? null)
 
   const joined = new Date(profile.created_at).toLocaleDateString(undefined, {
     month: "long",
