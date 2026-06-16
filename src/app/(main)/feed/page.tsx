@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { query } from "@/lib/db"
+import { fetchPosts } from "@/lib/queries"
 import { auth } from "@/lib/auth"
 import { PostForm } from "@/components/PostForm"
 import { PostCard } from "@/components/PostCard"
@@ -11,26 +11,15 @@ import type { PostWithAuthor } from "@/lib/types"
 async function getPosts(userId: string): Promise<PostWithAuthor[]> {
   // Posts from followed users + self, newest first. Fallback: if the user
   // follows nobody, show ALL posts so a new user's feed isn't empty.
-  const result = await query<PostWithAuthor>(
-    `WITH my_follows AS (
-       SELECT following_id FROM follows WHERE follower_id = $1
-     )
-     SELECT p.id, p.user_id, p.content, p.created_at, u.username,
-            (SELECT COUNT(*)::int FROM likes l WHERE l.post_id = p.id) AS like_count,
-            EXISTS (
-              SELECT 1 FROM likes l WHERE l.post_id = p.id AND l.user_id = $1
-            ) AS liked_by_me,
-            (SELECT COUNT(*)::int FROM comments c WHERE c.post_id = p.id) AS comment_count
-       FROM posts p
-       JOIN users u ON u.id = p.user_id
-      WHERE NOT EXISTS (SELECT 1 FROM my_follows)
-         OR p.user_id = $1
-         OR p.user_id IN (SELECT following_id FROM my_follows)
-      ORDER BY p.created_at DESC
-      LIMIT 50`,
-    [userId]
-  )
-  return result.rows
+  return fetchPosts({
+    viewerId: userId,
+    cte: `WITH my_follows AS (
+            SELECT following_id FROM follows WHERE follower_id = $1
+          )`,
+    where: `NOT EXISTS (SELECT 1 FROM my_follows)
+            OR p.user_id = $1
+            OR p.user_id IN (SELECT following_id FROM my_follows)`,
+  })
 }
 
 function NavItem({

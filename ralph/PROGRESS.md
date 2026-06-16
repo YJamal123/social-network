@@ -31,7 +31,7 @@ the exact first line of this file and commit.
 - [x] 17. Retire arbitrary values using tokens (`text-[10px]` → `caption`; `min-w-[1.1rem]`, `min-h-[60px]`, `w-28` → named spacing tokens added to config). Bump primary content cards (PostCard, profile Information/Wall) toward `p-4`, and widen the feed two-column gap slightly. Confirm coral is only on like/poke.
 
 ## Phase 6 — Server-side dedupe (no visual change)
-- [ ] 18. Create `src/lib/queries.ts` with a shared post-with-engagement helper (returns `PostWithAuthor[]`); replace the identical `like_count`/`liked_by_me`/`comment_count` subquery block in `getPosts` (`feed/page.tsx`) and `getUserPosts` (`profile/[username]/page.tsx`) — they differ only in WHERE. Raw `pg` via `query()` only, no ORM.
+- [x] 18. Create `src/lib/queries.ts` with a shared post-with-engagement helper (returns `PostWithAuthor[]`); replace the identical `like_count`/`liked_by_me`/`comment_count` subquery block in `getPosts` (`feed/page.tsx`) and `getUserPosts` (`profile/[username]/page.tsx`) — they differ only in WHERE. Raw `pg` via `query()` only, no ORM.
 - [ ] 19. Move the inline `DirectoryRow` type from `directory/page.tsx` into `src/lib/types.ts`.
 
 ## Wrap-up

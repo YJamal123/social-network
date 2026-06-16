@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
+import { fetchPosts } from "@/lib/queries"
 import { PostCard } from "@/components/PostCard"
 import { FollowButton } from "@/components/FollowButton"
 import { PokeButton } from "@/components/PokeButton"
@@ -42,21 +43,11 @@ async function getUserPosts(
   userId: string,
   viewerId: string | null
 ): Promise<PostWithAuthor[]> {
-  const result = await query<PostWithAuthor>(
-    `SELECT p.id, p.user_id, p.content, p.created_at, u.username,
-            (SELECT COUNT(*)::int FROM likes l WHERE l.post_id = p.id) AS like_count,
-            EXISTS (
-              SELECT 1 FROM likes l WHERE l.post_id = p.id AND l.user_id = $2
-            ) AS liked_by_me,
-            (SELECT COUNT(*)::int FROM comments c WHERE c.post_id = p.id) AS comment_count
-       FROM posts p
-       JOIN users u ON u.id = p.user_id
-      WHERE p.user_id = $1
-      ORDER BY p.created_at DESC
-      LIMIT 50`,
-    [userId, viewerId]
-  )
-  return result.rows
+  return fetchPosts({
+    viewerId,
+    where: `p.user_id = $2`,
+    params: [userId],
+  })
 }
 
 function Stat({ n, label }: { n: number; label: string }) {
