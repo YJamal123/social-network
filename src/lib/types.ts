@@ -75,6 +75,12 @@ export interface PokeWithPoker extends Poke {
   poker_username: string
 }
 
+// A newly-joined member — used in the dashboard Directory accordion preview
+export interface RecentUser {
+  id: string
+  username: string
+}
+
 // A user row in the directory list — with the viewer's follow state
 export interface DirectoryRow {
   id: string

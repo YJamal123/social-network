@@ -31,6 +31,11 @@ const config: Config = {
         "tertiary-container": "#aa2647",
         coral: "#e0506d",
         periwinkle: "#6d84b4",
+        // Cornell Carnelian — school banner + ad chrome ONLY; never for like/poke (coral) or app palette (navy/periwinkle).
+        carnelian: "#b31b1b",
+        "carnelian-dark": "#8a1414",
+        "carnelian-tint": "#f7e6e6",
+        "on-carnelian": "#ffffff",
         surface: "#f8f9ff",
         "surface-container-lowest": "#ffffff",
         "surface-container-low": "#eef4ff",

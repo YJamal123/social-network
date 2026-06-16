@@ -1,5 +1,5 @@
 import { query } from "@/lib/db"
-import type { PostWithAuthor } from "@/lib/types"
+import type { PostWithAuthor, RecentUser } from "@/lib/types"
 
 /**
  * Shared post-with-engagement reader. Returns posts joined with their author
@@ -31,6 +31,18 @@ export async function fetchPosts(opts: {
       ORDER BY p.created_at DESC
       LIMIT 50`,
     [viewerId, ...params]
+  )
+  return result.rows
+}
+
+/**
+ * Newest members first — used by the dashboard Directory accordion preview.
+ * Server-only (imports the pg `query()`). Raw SQL, no ORM.
+ */
+export async function fetchRecentUsers(limit = 3): Promise<RecentUser[]> {
+  const result = await query<RecentUser>(
+    "SELECT id, username FROM users ORDER BY created_at DESC LIMIT $1",
+    [limit]
   )
   return result.rows
 }
