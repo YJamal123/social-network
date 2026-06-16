@@ -6,13 +6,7 @@ import { DirectorySearch } from "@/components/DirectorySearch"
 import { Panel } from "@/components/Panel"
 import { UserRow } from "@/components/UserRow"
 import { EmptyState } from "@/components/EmptyState"
-
-interface DirectoryRow {
-  id: string
-  username: string
-  bio: string | null
-  followed_by_me: boolean
-}
+import type { DirectoryRow } from "@/lib/types"
 
 async function getUsers(
   viewerId: string | null,

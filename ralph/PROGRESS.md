@@ -32,7 +32,7 @@ the exact first line of this file and commit.
 
 ## Phase 6 — Server-side dedupe (no visual change)
 - [x] 18. Create `src/lib/queries.ts` with a shared post-with-engagement helper (returns `PostWithAuthor[]`); replace the identical `like_count`/`liked_by_me`/`comment_count` subquery block in `getPosts` (`feed/page.tsx`) and `getUserPosts` (`profile/[username]/page.tsx`) — they differ only in WHERE. Raw `pg` via `query()` only, no ORM.
-- [ ] 19. Move the inline `DirectoryRow` type from `directory/page.tsx` into `src/lib/types.ts`.
+- [x] 19. Move the inline `DirectoryRow` type from `directory/page.tsx` into `src/lib/types.ts`.
 
 ## Wrap-up
 - [ ] 20. Final pass: `npx tsc --noEmit` + `npm run build` clean; self-review all changes against the three skills and the roadmap guardrails; confirm coral is only on like/poke and no `"use client"` leaked into a page; then mark complete.

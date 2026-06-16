@@ -75,6 +75,14 @@ export interface PokeWithPoker extends Poke {
   poker_username: string
 }
 
+// A user row in the directory list — with the viewer's follow state
+export interface DirectoryRow {
+  id: string
+  username: string
+  bio: string | null
+  followed_by_me: boolean
+}
+
 // Public-facing user view for a profile page (no email / password_hash)
 export interface ProfileUser {
   id: string
