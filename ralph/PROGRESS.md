@@ -6,7 +6,7 @@ COMPLETE` the exact first line of this file and commit.
 
 ## Foundation
 - [x] 1. Migrate SCHEMA (`src/app/api/migrate/route.ts`): add `wall_posts` and `pokes` tables (+ indexes), and `ALTER TABLE users ADD COLUMN IF NOT EXISTS relationship_status / interests / courses`. All idempotent.
-- [ ] 2. Types (`src/lib/types.ts`): add `WallPost`, `WallPostWithAuthor`, `Poke`; extend `User` and `ProfileUser` with `relationship_status`, `interests`, `courses`.
+- [x] 2. Types (`src/lib/types.ts`): add `WallPost`, `WallPostWithAuthor`, `Poke`; extend `User` and `ProfileUser` with `relationship_status`, `interests`, `courses`.
 
 ## The Wall
 - [ ] 3. `postToWall(ownerId, content)` server action + a `getWallPosts(ownerId)` helper (or inline query) returning posts joined with author username, newest first.

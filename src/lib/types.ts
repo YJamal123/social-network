@@ -4,6 +4,9 @@ export interface User {
   email: string
   password_hash: string
   bio: string | null
+  relationship_status: string | null
+  interests: string | null
+  courses: string | null
   created_at: string
 }
 
@@ -45,11 +48,36 @@ export interface PostWithAuthor extends Post {
   comment_count: number
 }
 
+// A wall post — written by an author ON an owner's profile wall
+export interface WallPost {
+  id: string
+  owner_id: string
+  author_id: string
+  content: string
+  created_at: string
+}
+
+// Wall post joined with its author — used in the profile Wall section
+export interface WallPostWithAuthor extends WallPost {
+  author_username: string
+}
+
+// A poke from one user to another
+export interface Poke {
+  poker_id: string
+  pokee_id: string
+  created_at: string
+  acknowledged: boolean
+}
+
 // Public-facing user view for a profile page (no email / password_hash)
 export interface ProfileUser {
   id: string
   username: string
   bio: string | null
+  relationship_status: string | null
+  interests: string | null
+  courses: string | null
   created_at: string
   post_count: number
   follower_count: number
