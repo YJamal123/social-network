@@ -26,5 +26,5 @@ COMPLETE` the exact first line of this file and commit.
 - [x] 11. Profile page displays `relationship_status`/`interests`/`courses` (when set); `ProfileEditForm` + `updateProfile` let the owner edit them.
 
 ## Demo seed + wrap-up
-- [ ] 12. Extend `src/app/api/seed/route.ts`: demo `relationship_status`/`interests`/`courses`, a set of `wall_posts` (author ≠ owner), some `pokes` (a few unacknowledged); include `wallPosts` + `pokes` in the returned counts; keep it in the existing idempotent transaction.
+- [x] 12. Extend `src/app/api/seed/route.ts`: demo `relationship_status`/`interests`/`courses`, a set of `wall_posts` (author ≠ owner), some `pokes` (a few unacknowledged); include `wallPosts` + `pokes` in the returned counts; keep it in the existing idempotent transaction.
 - [ ] 13. Final pass: `npx tsc --noEmit` + `npm run build` clean; self-review all Phase 7 code for convention adherence; then mark complete.

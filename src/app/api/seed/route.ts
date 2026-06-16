@@ -5,7 +5,8 @@ import getPool from "@/lib/db"
 // One-shot, idempotent demo-data seeder. Mirrors /api/migrate: token-guarded and
 // run from inside the VPC (Cloud SQL is private-IP only, unreachable from a laptop).
 // Re-runnable — it first deletes every demo account (email LIKE '%@demo.sml') and
-// the ON DELETE CASCADE wipes their posts/follows/likes/comments, then reinserts.
+// the ON DELETE CASCADE wipes their posts/follows/likes/comments/wall_posts/pokes,
+// then reinserts.
 // Run once after deploy:
 //   curl -X POST "https://<url>/api/seed?token=$NEXTAUTH_SECRET"
 //
@@ -16,18 +17,57 @@ const DEMO_PASSWORD = "demo1234"
 interface DemoUser {
   username: string
   bio: string
+  relationshipStatus?: string
+  interests?: string
+  courses?: string
 }
 
-// ~9 users with characterful early-Facebook-era bios.
+// ~9 users with characterful early-Facebook-era bios + profile fields.
 const USERS: DemoUser[] = [
-  { username: "thefacebook_tom", bio: "CS junior. Building things in my dorm. Poke me." },
-  { username: "harvardhannah", bio: "Pre-med, perpetually in Lamont Library. Coffee is a food group." },
-  { username: "djmarcus", bio: "Spinning records at the eating club this Friday. RSVP or regret it." },
-  { username: "priya_codes", bio: "EE/CS double major. Soldering > sleeping." },
+  {
+    username: "thefacebook_tom",
+    bio: "CS junior. Building things in my dorm. Poke me.",
+    relationshipStatus: "Single",
+    interests: "Coding, late-night pizza, growth hacking",
+    courses: "CS161, CS50, Linear Algebra",
+  },
+  {
+    username: "harvardhannah",
+    bio: "Pre-med, perpetually in Lamont Library. Coffee is a food group.",
+    relationshipStatus: "In a relationship",
+    interests: "Organic chemistry, running, true-crime podcasts",
+    courses: "Orgo II, Biostatistics, Cell Biology",
+  },
+  {
+    username: "djmarcus",
+    bio: "Spinning records at the eating club this Friday. RSVP or regret it.",
+    relationshipStatus: "It's complicated",
+    interests: "Vinyl, mixtapes, throwing parties",
+    courses: "Music Theory, Sociology 101",
+  },
+  {
+    username: "priya_codes",
+    bio: "EE/CS double major. Soldering > sleeping.",
+    relationshipStatus: "Single",
+    interests: "Circuits, robotics, mechanical keyboards",
+    courses: "Circuits, Signals & Systems, CS161",
+  },
   { username: "skater_dave", bio: "Econ major who would rather be at the skatepark." },
-  { username: "artsy_lena", bio: "Visual arts. I will draw you for ramen money." },
+  {
+    username: "artsy_lena",
+    bio: "Visual arts. I will draw you for ramen money.",
+    relationshipStatus: "Single",
+    interests: "Charcoal portraits, gallery hopping, ramen",
+    courses: "Studio Art, Art History, Intro Econ",
+  },
   { username: "coachrandy", bio: "Intramural soccer captain. Practice is NOT optional." },
-  { username: "bookish_mei", bio: "English lit. Currently 4 novels deep, 0 essays written." },
+  {
+    username: "bookish_mei",
+    bio: "English lit. Currently 4 novels deep, 0 essays written.",
+    relationshipStatus: "It's complicated",
+    interests: "Victorian novels, tea, procrastination",
+    courses: "Modernist Lit, Creative Writing, Philosophy 101",
+  },
   { username: "gamer_greg", bio: "Halo LAN party in my common room. BYO controller." },
 ]
 
@@ -152,6 +192,41 @@ const COMMENTS: [number, number, number, string][] = [
   [6, 8, 4, "Productivity hack of the year."],
 ]
 
+// Wall posts as [ownerIdx, authorIdx, content]. Author always differs from owner
+// (someone writing ON another person's wall). PK is generated, so no conflicts.
+const WALL_POSTS: [number, number, string][] = [
+  [0, 1, "Tom, the new directory is slick. Adding you right now!"],
+  [0, 2, "Party at the eating club Friday — you're on the list."],
+  [0, 8, "Bring your laptop to the LAN, we need another player."],
+  [1, 0, "Good luck on the orgo exam, you've got this!"],
+  [1, 5, "Found you a study buddy — me. I bring snacks."],
+  [2, 4, "That set on Friday was unreal. Encore?"],
+  [2, 8, "Need a Halo theme remix for the next mixtape."],
+  [3, 0, "Saw your LED matrix demo — genuinely impressed."],
+  [3, 6, "Soldering iron burns build character. Keep going."],
+  [4, 2, "Skate session Saturday? Bring the new deck."],
+  [5, 1, "Your charcoal portrait is hanging in my dorm now. Thank you!"],
+  [5, 7, "Come to the gallery show, I saved you a spot."],
+  [6, 4, "Signed up for intramural soccer. Don't make me regret it."],
+  [7, 5, "Lending you my favorite novel — guard it with your life."],
+  [8, 0, "Ethernet cable delivered to your door. For science."],
+]
+
+// Pokes as [pokerIdx, pokeeIdx, acknowledged]. PK (poker_id, pokee_id) — each
+// ordered pair appears once. A few left unacknowledged so the indicator shows.
+const POKES: [number, number, boolean][] = [
+  [1, 0, false],
+  [2, 0, false],
+  [3, 0, true],
+  [0, 1, false],
+  [5, 1, true],
+  [4, 2, false],
+  [8, 0, true],
+  [0, 3, false],
+  [6, 4, true],
+  [7, 5, false],
+]
+
 export async function POST(request: Request) {
   const token = new URL(request.url).searchParams.get("token")
   if (!process.env.NEXTAUTH_SECRET || token !== process.env.NEXTAUTH_SECRET) {
@@ -171,8 +246,17 @@ export async function POST(request: Request) {
     const userIds: string[] = []
     for (const u of USERS) {
       const res = await client.query<{ id: string }>(
-        "INSERT INTO users (username, email, password_hash, bio) VALUES ($1, $2, $3, $4) RETURNING id",
-        [u.username, `${u.username}@demo.sml`, passwordHash, u.bio]
+        `INSERT INTO users (username, email, password_hash, bio, relationship_status, interests, courses)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [
+          u.username,
+          `${u.username}@demo.sml`,
+          passwordHash,
+          u.bio,
+          u.relationshipStatus ?? null,
+          u.interests ?? null,
+          u.courses ?? null,
+        ]
       )
       userIds.push(res.rows[0].id)
     }
@@ -234,6 +318,32 @@ export async function POST(request: Request) {
       commentCount++
     }
 
+    // Wall posts (author writes on owner's wall). Spread created_at over recent days.
+    let wallPostCount = 0
+    let wallHoursAgo = 0
+    for (const [ownerIdx, authorIdx, content] of WALL_POSTS) {
+      wallHoursAgo += 5 + ((ownerIdx + authorIdx) % 4)
+      const offset = Math.min(wallHoursAgo, 240)
+      await client.query(
+        `INSERT INTO wall_posts (owner_id, author_id, content, created_at)
+         VALUES ($1, $2, $3, now() - ($4 || ' hours')::interval)`,
+        [userIds[ownerIdx], userIds[authorIdx], content, offset]
+      )
+      wallPostCount++
+    }
+
+    // Pokes (some unacknowledged so the header indicator shows).
+    let pokeCount = 0
+    for (const [pokerIdx, pokeeIdx, acknowledged] of POKES) {
+      await client.query(
+        `INSERT INTO pokes (poker_id, pokee_id, acknowledged) VALUES ($1, $2, $3)
+         ON CONFLICT (poker_id, pokee_id) DO UPDATE
+           SET created_at = now(), acknowledged = EXCLUDED.acknowledged`,
+        [userIds[pokerIdx], userIds[pokeeIdx], acknowledged]
+      )
+      pokeCount++
+    }
+
     await client.query("COMMIT")
 
     return NextResponse.json({
@@ -244,6 +354,8 @@ export async function POST(request: Request) {
         follows: followCount,
         likes: likeCount,
         comments: commentCount,
+        wallPosts: wallPostCount,
+        pokes: pokeCount,
       },
     })
   } catch (err) {
