@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { toggleFollow } from "@/app/(main)/profile/actions"
+import { buttonClass } from "@/lib/ui"
 
 export function FollowButton({
   targetUserId,
@@ -32,7 +33,7 @@ export function FollowButton({
       disabled={pending}
       className={
         following
-          ? "shrink-0 rounded border border-primary px-3 py-1 text-label-bold text-primary transition-colors hover:bg-surface-container disabled:opacity-50"
+          ? buttonClass.outline
           : "shrink-0 rounded bg-primary px-3 py-1 text-label-bold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
       }
     >

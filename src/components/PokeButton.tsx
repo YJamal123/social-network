@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { poke } from "@/app/(main)/pokes/actions"
+import { buttonClass } from "@/lib/ui"
 
 export function PokeButton({ targetUserId }: { targetUserId: string }) {
   const [poked, setPoked] = useState(false)
@@ -21,7 +22,7 @@ export function PokeButton({ targetUserId }: { targetUserId: string }) {
       type="button"
       onClick={handleClick}
       disabled={pending || poked}
-      className="shrink-0 rounded border border-primary px-3 py-1 text-label-bold text-primary transition-colors hover:bg-surface-container disabled:opacity-50"
+      className={buttonClass.outline}
     >
       {poked ? "Poked!" : "Poke"}
     </button>
