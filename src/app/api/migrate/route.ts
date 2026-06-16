@@ -26,6 +26,32 @@ CREATE TABLE IF NOT EXISTS posts (
 
 CREATE INDEX IF NOT EXISTS posts_user_id_idx    ON posts(user_id);
 CREATE INDEX IF NOT EXISTS posts_created_at_idx ON posts(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS follows (
+  follower_id  UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  following_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  PRIMARY KEY (follower_id, following_id)
+);
+
+CREATE INDEX IF NOT EXISTS follows_following_id_idx ON follows(following_id);
+
+CREATE TABLE IF NOT EXISTS likes (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, post_id)
+);
+
+CREATE INDEX IF NOT EXISTS likes_post_id_idx ON likes(post_id);
+
+CREATE TABLE IF NOT EXISTS comments (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id    UUID        NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content    TEXT        NOT NULL CHECK (char_length(content) <= 280),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS comments_post_id_idx ON comments(post_id);
 `
 
 export async function POST(request: Request) {

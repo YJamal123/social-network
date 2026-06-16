@@ -5,7 +5,7 @@ verify (`tsc` + `build`), commit, tick it. When all are checked, prepend a line
 `PHASE6 COMPLETE` to this file and commit.
 
 ## Foundation
-- [ ] 1. Add `follows`, `likes`, `comments` tables (+ indexes) to the SCHEMA string in `src/app/api/migrate/route.ts` (idempotent `IF NOT EXISTS`).
+- [x] 1. Add `follows`, `likes`, `comments` tables (+ indexes) to the SCHEMA string in `src/app/api/migrate/route.ts` (idempotent `IF NOT EXISTS`).
 - [ ] 2. Add types to `src/lib/types.ts`: `Follow`, `Like`, `Comment`; extend `PostWithAuthor` with `like_count: number`, `liked_by_me: boolean`, `comment_count: number`.
 
 ## 6a — Follows
