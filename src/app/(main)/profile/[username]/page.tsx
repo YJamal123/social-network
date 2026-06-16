@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { PostCard } from "@/components/PostCard"
 import { FollowButton } from "@/components/FollowButton"
+import { PokeButton } from "@/components/PokeButton"
 import { WallComposer } from "@/components/WallComposer"
 import { getWallPosts } from "@/app/(main)/profile/actions"
 import { timeAgo } from "@/lib/time"
@@ -95,10 +96,13 @@ export default async function ProfilePage({
                 </Link>
               ) : (
                 session?.user?.id && (
-                  <FollowButton
-                    targetUserId={profile.id}
-                    initialFollowing={following}
-                  />
+                  <div className="flex shrink-0 items-center gap-2">
+                    <PokeButton targetUserId={profile.id} />
+                    <FollowButton
+                      targetUserId={profile.id}
+                      initialFollowing={following}
+                    />
+                  </div>
                 )
               )}
             </div>

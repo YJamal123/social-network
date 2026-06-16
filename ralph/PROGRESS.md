@@ -19,7 +19,7 @@ COMPLETE` the exact first line of this file and commit.
 
 ## The Poke
 - [x] 8. `poke(targetId)` server action (upsert, ignore self-poke, revalidate) + helpers to count unacknowledged pokes and list pokers.
-- [ ] 9. `PokeButton` client component on other users' profiles.
+- [x] 9. `PokeButton` client component on other users' profiles.
 - [ ] 10. Unacknowledged-poke indicator in `SiteHeader` + a `/pokes` page (who poked you, "Poke back" that pokes them and acknowledges theirs).
 
 ## Profile fields
