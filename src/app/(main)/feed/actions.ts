@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
-import { validatePostContent } from "@/lib/validation"
+import { validateComment, validatePostContent } from "@/lib/validation"
+import type { CommentWithAuthor } from "@/lib/types"
 
 export type PostState = { error?: string }
 
@@ -68,4 +69,62 @@ export async function toggleLike(postId: string): Promise<LikeState> {
   revalidatePath("/feed")
   revalidatePath("/profile/[username]", "page")
   return {}
+}
+
+export type CommentState = { error?: string }
+
+// Add a comment to a post. Validates content (non-empty, ≤280) and revalidates
+// the feed and profile pages so the comment count stays in sync.
+export async function addComment(
+  postId: string,
+  content: string
+): Promise<CommentState> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: "You must be logged in to comment" }
+  }
+
+  const result = validateComment(content)
+  if (!result.ok) {
+    return { error: result.error }
+  }
+
+  try {
+    await query(
+      "INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3)",
+      [postId, session.user.id, result.value]
+    )
+  } catch (err) {
+    console.error("Add comment failed:", err)
+    return { error: "Failed to add comment" }
+  }
+
+  revalidatePath("/feed")
+  revalidatePath("/profile/[username]", "page")
+  return {}
+}
+
+export type CommentsResult = { comments?: CommentWithAuthor[]; error?: string }
+
+// Fetch all comments for a post, joined with the author's username, oldest first.
+export async function getComments(postId: string): Promise<CommentsResult> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: "You must be logged in" }
+  }
+
+  try {
+    const result = await query<CommentWithAuthor>(
+      `SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, u.username
+       FROM comments c
+       JOIN users u ON u.id = c.user_id
+       WHERE c.post_id = $1
+       ORDER BY c.created_at ASC`,
+      [postId]
+    )
+    return { comments: result.rows }
+  } catch (err) {
+    console.error("Get comments failed:", err)
+    return { error: "Failed to load comments" }
+  }
 }

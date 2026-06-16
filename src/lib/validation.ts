@@ -4,6 +4,7 @@
 
 export const MAX_POST_LENGTH = 280
 export const MAX_BIO_LENGTH = 280
+export const MAX_COMMENT_LENGTH = 280
 
 export type ValidationResult = { ok: true; value: string } | { ok: false; error: string }
 
@@ -15,6 +16,18 @@ export function validatePostContent(content: string): ValidationResult {
   }
   if (trimmed.length > MAX_POST_LENGTH) {
     return { ok: false, error: "Post must be 280 characters or fewer" }
+  }
+  return { ok: true, value: trimmed }
+}
+
+/** Validate a comment. Same rules as a post: non-empty, ≤280 chars. */
+export function validateComment(content: string): ValidationResult {
+  const trimmed = content.trim()
+  if (!trimmed) {
+    return { ok: false, error: "Comment cannot be empty" }
+  }
+  if (trimmed.length > MAX_COMMENT_LENGTH) {
+    return { ok: false, error: "Comment must be 280 characters or fewer" }
   }
   return { ok: true, value: trimmed }
 }

@@ -20,7 +20,7 @@ verify (`tsc` + `build`), commit, tick it. When all are checked, prepend a line
 - [x] 9. `LikeButton` client component (heart + count, optimistic), integrated into `PostCard`.
 
 ## 6c — Comments
-- [ ] 10. `addComment(postId, content)` + `getComments(postId)` server actions (getComments joins author username, oldest first).
+- [x] 10. `addComment(postId, content)` + `getComments(postId)` server actions (getComments joins author username, oldest first).
 - [ ] 11. Extend feed AND profile post queries with `comment_count`.
 - [ ] 12. `CommentSection` client component integrated into `PostCard`: count toggles an inline thread, lazily loads comments on first expand, with a ≤280-char composer.
 
