@@ -59,6 +59,64 @@ export async function getUnacknowledgedPokeCount(): Promise<number> {
   }
 }
 
+// Poke someone back: poke them AND acknowledge the poke they sent us, in one
+// step. Used by the "Poke back" button on the /pokes page. Self is impossible
+// here (you can't appear in your own pokers list). Revalidates so both the
+// indicator and the list update.
+export async function pokeBack(pokerId: string): Promise<PokeState> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: "You must be logged in" }
+  }
+
+  const meId = session.user.id
+  if (pokerId === meId) {
+    return {}
+  }
+
+  try {
+    await query(
+      `INSERT INTO pokes (poker_id, pokee_id) VALUES ($1, $2)
+       ON CONFLICT (poker_id, pokee_id)
+       DO UPDATE SET created_at = now(), acknowledged = false`,
+      [meId, pokerId]
+    )
+    await query(
+      "UPDATE pokes SET acknowledged = true WHERE poker_id = $1 AND pokee_id = $2",
+      [pokerId, meId]
+    )
+  } catch (err) {
+    console.error("Poke back failed:", err)
+    return { error: "Failed to poke back" }
+  }
+
+  revalidatePath("/profile/[username]", "page")
+  revalidatePath("/pokes")
+  return {}
+}
+
+// Mark every poke aimed at the current user as acknowledged so the SiteHeader
+// indicator clears. Called when the /pokes page is viewed.
+export async function acknowledgePokes(): Promise<PokeState> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: "You must be logged in" }
+  }
+
+  try {
+    await query(
+      "UPDATE pokes SET acknowledged = true WHERE pokee_id = $1 AND acknowledged = false",
+      [session.user.id]
+    )
+  } catch (err) {
+    console.error("Acknowledge pokes failed:", err)
+    return { error: "Failed to acknowledge pokes" }
+  }
+
+  revalidatePath("/pokes")
+  return {}
+}
+
 // List everyone who has poked the current user, joined with the poker's
 // username, newest first. Used by the /pokes page.
 export async function getPokers(): Promise<PokeWithPoker[]> {
