@@ -12,6 +12,8 @@ const nextConfig = {
         "localhost:8080",
         "mdjamal-app-110062063496.us-central1.run.app",
       ],
+      // Allow avatar image uploads (default Server Action body limit is 1MB).
+      bodySizeLimit: "3mb",
     },
   },
 };

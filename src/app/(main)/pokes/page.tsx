@@ -32,6 +32,7 @@ export default async function PokesPage() {
                 className="border-b border-outline-variant p-panel-padding transition-colors last:border-0 hover:bg-surface-container"
               >
                 <UserRow
+                  userId={p.poker_id}
                   username={p.poker_username}
                   subtitle={
                     <span className="text-outline">

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { ProfileEditForm } from "@/components/ProfileEditForm"
+import { AvatarUpload } from "@/components/AvatarUpload"
 
 export default async function EditProfilePage({
   params,
@@ -26,7 +27,8 @@ export default async function EditProfilePage({
   const row = result.rows[0]
 
   return (
-    <main className="mx-auto max-w-2xl p-6">
+    <main className="mx-auto flex max-w-2xl flex-col gap-gutter p-6">
+      <AvatarUpload userId={session.user.id} username={params.username} />
       <ProfileEditForm
         username={params.username}
         initialBio={row?.bio ?? ""}

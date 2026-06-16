@@ -76,6 +76,8 @@ CREATE INDEX IF NOT EXISTS pokes_pokee_id_idx ON pokes(pokee_id);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS relationship_status TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS interests TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS courses TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar BYTEA;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime TEXT;
 `
 
 export async function POST(request: Request) {

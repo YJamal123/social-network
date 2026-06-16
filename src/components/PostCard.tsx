@@ -11,7 +11,7 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
       <div className="p-4">
         <div className="flex gap-stack-lg">
           <Link href={`/profile/${post.username}`} className="shrink-0">
-            <Avatar username={post.username} size="md" />
+            <Avatar userId={post.user_id} username={post.username} size="md" />
           </Link>
           <div className="min-w-0 flex-1">
             <UserNameTime username={post.username} time={post.created_at} />

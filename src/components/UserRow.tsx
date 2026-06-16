@@ -3,10 +3,12 @@ import type { ReactNode } from "react"
 import { Avatar } from "@/components/Avatar"
 
 export function UserRow({
+  userId,
   username,
   subtitle,
   action,
 }: {
+  userId: string
   username: string
   subtitle?: ReactNode
   action?: ReactNode
@@ -14,7 +16,7 @@ export function UserRow({
   return (
     <div className="flex items-center gap-3">
       <Link href={`/profile/${username}`} className="shrink-0">
-        <Avatar username={username} size="sm" />
+        <Avatar userId={userId} username={username} size="sm" />
       </Link>
       <div className="min-w-0 flex-1">
         <Link

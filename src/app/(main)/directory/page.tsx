@@ -77,6 +77,7 @@ export default async function DirectoryPage({
                   className="bg-white p-panel-padding transition-colors hover:bg-surface-container"
                 >
                   <UserRow
+                    userId={u.id}
                     username={u.username}
                     subtitle={
                       u.bio ? (

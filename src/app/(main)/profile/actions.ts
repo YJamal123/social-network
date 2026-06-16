@@ -167,3 +167,54 @@ export async function getWallPosts(
   )
   return result.rows
 }
+
+export type AvatarState = { error?: string }
+
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024 // 2MB
+const ALLOWED_AVATAR_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]
+
+// Upload (or replace) the current user's profile picture. Owner-only: always
+// writes to the session user's own row. Stored as bytea in Cloud SQL and served
+// by /api/avatar/[id].
+export async function uploadAvatar(
+  _prev: AvatarState,
+  formData: FormData
+): Promise<AvatarState> {
+  const session = await auth()
+  if (!session?.user?.id || !session.user.name) {
+    return { error: "You must be logged in" }
+  }
+
+  const file = formData.get("avatar")
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Please choose an image" }
+  }
+  if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+    return { error: "Image must be JPEG, PNG, WebP, or GIF" }
+  }
+  if (file.size > MAX_AVATAR_BYTES) {
+    return { error: "Image must be 2MB or smaller" }
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer())
+
+  try {
+    await query("UPDATE users SET avatar = $1, avatar_mime = $2 WHERE id = $3", [
+      bytes,
+      file.type,
+      session.user.id,
+    ])
+  } catch (err) {
+    console.error("Avatar upload failed:", err)
+    return { error: "Failed to upload image" }
+  }
+
+  revalidatePath(`/profile/${session.user.name}`)
+  revalidatePath("/feed")
+  return {}
+}

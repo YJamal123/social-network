@@ -100,7 +100,7 @@ export default async function ProfilePage({
       <aside className="flex w-full shrink-0 flex-col gap-stack-lg md:w-52">
         <div className="rounded-lg bg-surface-container-lowest p-panel-padding shadow">
           <div className="mb-2">
-            <Avatar username={profile.username} size="xl" />
+            <Avatar userId={profile.id} username={profile.username} size="xl" />
           </div>
           {isOwnProfile && (
             <div className="text-center">
