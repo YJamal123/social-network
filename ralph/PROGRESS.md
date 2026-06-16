@@ -19,7 +19,7 @@ the exact first line of this file and commit.
 - [x] 9. Add `src/app/not-found.tsx` — an on-brand 404 (so `profile/[username]`'s `notFound()` renders nicely).
 
 ## Phase 4 — Interaction + accessibility completeness
-- [ ] 10. `PokeButton.tsx` and `PokeBackButton.tsx`: surface `result.error` inline (`text-error`) instead of silently ignoring it (optionally optimistic with revert, matching `LikeButton.tsx`).
+- [x] 10. `PokeButton.tsx` and `PokeBackButton.tsx`: surface `result.error` inline (`text-error`) instead of silently ignoring it (optionally optimistic with revert, matching `LikeButton.tsx`).
 - [ ] 11. Add accessible names / live regions: poke badge in `SiteHeader.tsx` gets `aria-label` + `aria-live="polite"`; the header search and feed Quick Search inputs get `aria-label`.
 - [ ] 12. Add a mobile nav fallback to `SiteHeader.tsx` (the nav is `hidden md:flex`, so directory/pokes/profile/logout are unreachable on mobile) — a `md:hidden` menu or second link row.
 - [ ] 13. Raise contrast: body/meta text that must be read (e.g. comment/Wall timestamps doubling as meta) moves from `text-outline` to `text-on-surface-variant`; reserve `text-outline` for de-emphasized meta only.
