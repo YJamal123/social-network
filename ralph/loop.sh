@@ -21,7 +21,7 @@ for i in $(seq 1 "$MAX"); do
   echo "[ralph] ===== iteration $i / $MAX @ $(date '+%H:%M:%S') ====="
   before="$(git rev-parse HEAD)"
 
-  cat ralph/PROMPT.md | claude -p --dangerously-skip-permissions \
+  cat ralph/PROMPT.md | claude -p --model claude-opus-4-8 --dangerously-skip-permissions \
     > "$LOGDIR/iter-$i.log" 2>&1
   code=$?
 
