@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react"
 import { createPost } from "@/app/(main)/feed/actions"
 import { Panel } from "@/components/Panel"
+import { buttonClass } from "@/lib/ui"
 
 const MAX = 280
 
@@ -51,7 +52,7 @@ export function PostForm() {
           <button
             type="submit"
             disabled={pending || content.trim().length === 0}
-            className="rounded bg-primary px-6 py-1.5 text-label-bold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+            className={buttonClass.primary}
           >
             {pending ? "Posting…" : "Post"}
           </button>

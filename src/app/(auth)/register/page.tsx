@@ -3,6 +3,7 @@
 import { useFormState } from "react-dom"
 import Link from "next/link"
 import { register } from "./actions"
+import { buttonClass } from "@/lib/ui"
 
 export default function RegisterPage() {
   const [state, formAction] = useFormState(register, {})
@@ -47,7 +48,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            className="w-full rounded bg-primary p-2 text-label-bold text-on-primary transition-opacity hover:opacity-90"
+            className={`${buttonClass.primary} w-full`}
           >
             Create account
           </button>

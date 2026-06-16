@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react"
 import { postToWall } from "@/app/(main)/profile/actions"
+import { buttonClass } from "@/lib/ui"
 
 const MAX = 280
 
@@ -51,7 +52,7 @@ export function WallComposer({ ownerId }: { ownerId: string }) {
         <button
           type="submit"
           disabled={pending || content.trim().length === 0}
-          className="rounded bg-primary px-3 py-1 text-label-bold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+          className={buttonClass.primary}
         >
           {pending ? "Posting…" : "Post"}
         </button>

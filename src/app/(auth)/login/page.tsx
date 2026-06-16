@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import Link from "next/link"
+import { buttonClass } from "@/lib/ui"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -64,7 +65,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded bg-primary p-2 text-label-bold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+            className={`${buttonClass.primary} w-full`}
           >
             {pending ? "Logging in…" : "Log in"}
           </button>

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { addComment, getComments } from "@/app/(main)/feed/actions"
 import type { CommentWithAuthor } from "@/lib/types"
 import { timeAgo } from "@/lib/time"
+import { buttonClass } from "@/lib/ui"
 
 const MAX_COMMENT_LENGTH = 280
 
@@ -124,7 +125,7 @@ export function CommentSection({
               <button
                 type="submit"
                 disabled={pending || draft.trim().length === 0}
-                className="rounded bg-primary px-3 py-1 text-label-bold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
+                className={buttonClass.primary}
               >
                 {pending ? "Posting…" : "Comment"}
               </button>

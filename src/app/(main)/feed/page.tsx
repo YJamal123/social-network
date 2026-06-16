@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth"
 import { PostForm } from "@/components/PostForm"
 import { PostCard } from "@/components/PostCard"
 import { Panel } from "@/components/Panel"
+import { buttonClass } from "@/lib/ui"
 import type { PostWithAuthor } from "@/lib/types"
 
 async function getPosts(userId: string): Promise<PostWithAuthor[]> {
@@ -66,7 +67,7 @@ export default async function FeedPage() {
               placeholder="Find people…"
               className="w-full rounded border border-outline-variant px-2 py-1.5 text-body-base focus:border-primary focus:outline-none"
             />
-            <button className="rounded bg-primary py-1.5 text-label-bold text-on-primary transition-opacity hover:opacity-90">
+            <button className={buttonClass.primary}>
               Search
             </button>
           </form>
