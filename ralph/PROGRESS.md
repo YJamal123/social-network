@@ -14,7 +14,7 @@ the exact first line of this file and commit.
 - [x] 6. Fix `SiteHeader.tsx` search focus (currently `focus:ring-0`) and optionally add an `@layer base` rule in `globals.css` giving `input, textarea` a guaranteed focus ring.
 
 ## Phase 3 — Resilience: loading, error, not-found
-- [ ] 7. Add co-located `loading.tsx` skeletons mirroring each page's grid (reuse the exact grid classes to avoid layout shift): `feed/loading.tsx`, `profile/[username]/loading.tsx`, `directory/loading.tsx`, `pokes/loading.tsx`. Use `animate-pulse` blocks with token colors.
+- [x] 7. Add co-located `loading.tsx` skeletons mirroring each page's grid (reuse the exact grid classes to avoid layout shift): `feed/loading.tsx`, `profile/[username]/loading.tsx`, `directory/loading.tsx`, `pokes/loading.tsx`. Use `animate-pulse` blocks with token colors.
 - [ ] 8. Add `src/app/(main)/error.tsx` — a Client Component (`"use client"`) taking `{ error, reset }`, rendered as a styled `<Panel>` + `error-container` banner with a "Try again" button calling `reset()`.
 - [ ] 9. Add `src/app/not-found.tsx` — an on-brand 404 (so `profile/[username]`'s `notFound()` renders nicely).
 
