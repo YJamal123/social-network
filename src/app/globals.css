@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Guarantee a visible keyboard focus ring on every input/textarea app-wide, so
+   no call site can silently drop it (the shared fieldClass adds the same ring;
+   this is the floor for any field that doesn't use it). */
+@layer base {
+  input,
+  textarea {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-container;
+  }
+}
+
 /* Retro-collegiate light theme (Stitch design system). Light surfaces only —
    no dark-mode flip (it turned input text near-white on the white forms). */
 :root {

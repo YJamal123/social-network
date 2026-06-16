@@ -11,7 +11,7 @@ the exact first line of this file and commit.
 - [x] 3. Replace the outline-button className in `FollowButton.tsx`, `PokeButton.tsx`, `PokeBackButton.tsx` with `buttonClass.outline` (keep each component's own state/transition logic).
 - [x] 4. Replace the primary-fill button className in `PostForm.tsx`, `WallComposer.tsx`, `CommentSection.tsx`, the feed Quick Search button (`feed/page.tsx`), and login/register with `buttonClass.primary`.
 - [x] 5. Replace the duplicated input/textarea className in `PostForm.tsx`, `WallComposer.tsx`, `CommentSection.tsx`, `ProfileEditForm.tsx`, login/register, and `DirectorySearch.tsx` with the shared `fieldClass` (which adds the focus ring).
-- [ ] 6. Fix `SiteHeader.tsx` search focus (currently `focus:ring-0`) and optionally add an `@layer base` rule in `globals.css` giving `input, textarea` a guaranteed focus ring.
+- [x] 6. Fix `SiteHeader.tsx` search focus (currently `focus:ring-0`) and optionally add an `@layer base` rule in `globals.css` giving `input, textarea` a guaranteed focus ring.
 
 ## Phase 3 — Resilience: loading, error, not-found
 - [ ] 7. Add co-located `loading.tsx` skeletons mirroring each page's grid (reuse the exact grid classes to avoid layout shift): `feed/loading.tsx`, `profile/[username]/loading.tsx`, `directory/loading.tsx`, `pokes/loading.tsx`. Use `animate-pulse` blocks with token colors.

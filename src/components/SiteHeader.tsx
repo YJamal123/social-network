@@ -67,7 +67,7 @@ export async function SiteHeader() {
           <input
             name="q"
             placeholder="Search…"
-            className="w-28 border-none bg-transparent text-body-sm text-on-primary placeholder:text-on-primary/60 focus:outline-none focus:ring-0"
+            className="w-28 border-none bg-transparent text-body-sm text-on-primary placeholder:text-on-primary/60"
           />
         </form>
       </div>
