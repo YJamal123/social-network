@@ -12,7 +12,7 @@ verify (`tsc` + `build`), commit, tick it. When all are checked, prepend a line
 - [x] 3. `toggleFollow(targetUserId)` server action (insert/delete, ignore self-follow, revalidate) in `src/app/(main)/profile/actions.ts` (or a new follows actions file).
 - [x] 4. `FollowButton` client component (optimistic), rendered on other users' profiles only.
 - [x] 5. Profile page: show follower + following counts, and the `FollowButton`.
-- [ ] 6. Feed query: posts from followed users + self, newest first; fall back to ALL posts if following nobody.
+- [x] 6. Feed query: posts from followed users + self, newest first; fall back to ALL posts if following nobody.
 
 ## 6b — Likes
 - [ ] 7. `toggleLike(postId)` server action (insert/delete, revalidate).
