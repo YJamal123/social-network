@@ -21,7 +21,7 @@ verify (`tsc` + `build`), commit, tick it. When all are checked, prepend a line
 
 ## 6c — Comments
 - [x] 10. `addComment(postId, content)` + `getComments(postId)` server actions (getComments joins author username, oldest first).
-- [ ] 11. Extend feed AND profile post queries with `comment_count`.
+- [x] 11. Extend feed AND profile post queries with `comment_count`.
 - [ ] 12. `CommentSection` client component integrated into `PostCard`: count toggles an inline thread, lazily loads comments on first expand, with a ≤280-char composer.
 
 ## Wrap-up
