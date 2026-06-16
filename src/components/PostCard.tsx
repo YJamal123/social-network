@@ -8,27 +8,40 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
   const initial = post.username.charAt(0).toUpperCase()
 
   return (
-    <article className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-center gap-2">
-        <Link
-          href={`/profile/${post.username}`}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-semibold text-white"
-        >
-          {initial}
-        </Link>
-        <Link href={`/profile/${post.username}`} className="font-medium hover:underline">
-          {post.username}
-        </Link>
-        <span className="text-xs text-gray-400">· {timeAgo(post.created_at)}</span>
-      </div>
-      <p className="whitespace-pre-wrap break-words text-gray-800">{post.content}</p>
-      <div className="mt-3 flex items-center gap-4">
-        <LikeButton
-          postId={post.id}
-          initialLiked={post.liked_by_me}
-          initialCount={post.like_count}
-        />
-        <CommentSection postId={post.id} initialCount={post.comment_count} />
+    <article className="overflow-hidden border border-outline-variant bg-surface-container-lowest shadow-sm">
+      <div className="p-panel-padding">
+        <div className="flex gap-stack-lg">
+          <Link
+            href={`/profile/${post.username}`}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded border-2 border-primary bg-primary-container text-lg font-bold text-white"
+          >
+            {initial}
+          </Link>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <Link
+                href={`/profile/${post.username}`}
+                className="text-label-bold text-primary hover:underline"
+              >
+                {post.username}
+              </Link>
+              <span className="shrink-0 text-body-sm text-outline">
+                {timeAgo(post.created_at)}
+              </span>
+            </div>
+            <p className="mt-1 whitespace-pre-wrap break-words text-body-base text-on-background">
+              {post.content}
+            </p>
+            <div className="mt-4 flex items-start gap-6 border-t border-outline-variant pt-stack-md">
+              <LikeButton
+                postId={post.id}
+                initialLiked={post.liked_by_me}
+                initialCount={post.like_count}
+              />
+              <CommentSection postId={post.id} initialCount={post.comment_count} />
+            </div>
+          </div>
+        </div>
       </div>
     </article>
   )

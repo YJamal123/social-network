@@ -63,12 +63,12 @@ export function CommentSection({
   }
 
   return (
-    <div className="text-sm">
+    <div className="min-w-0 flex-1">
       <button
         type="button"
         onClick={handleToggle}
         aria-expanded={open}
-        className="flex items-center gap-1 text-gray-500 hover:text-blue-600"
+        className="flex items-center gap-1.5 text-body-sm font-bold text-secondary transition-colors hover:text-primary hover:underline"
       >
         <svg
           viewBox="0 0 24 24"
@@ -79,49 +79,52 @@ export function CommentSection({
         >
           <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.38 8.38 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z" />
         </svg>
-        <span>{count}</span>
+        <span>Comment ({count})</span>
       </button>
 
       {open && (
-        <div className="mt-3 space-y-3">
-          {loading && <p className="text-gray-400">Loading comments…</p>}
+        <div className="mt-stack-md space-y-stack-md rounded border border-outline-variant bg-surface-container p-panel-padding">
+          {loading && <p className="text-body-sm text-outline">Loading comments…</p>}
 
           {loaded && comments.length === 0 && !loading && (
-            <p className="text-gray-400">No comments yet.</p>
+            <p className="text-body-sm text-outline">No comments yet.</p>
           )}
 
           {comments.map((comment) => (
-            <div key={comment.id} className="rounded-md bg-gray-50 p-2">
-              <div className="mb-0.5 flex items-center gap-2">
-                <span className="font-medium">{comment.username}</span>
-                <span className="text-xs text-gray-400">
-                  · {timeAgo(comment.created_at)}
+            <div
+              key={comment.id}
+              className="rounded border border-outline-variant bg-white p-2"
+            >
+              <div className="mb-0.5 flex items-center justify-between gap-2">
+                <span className="text-label-bold text-primary">{comment.username}</span>
+                <span className="text-body-sm text-outline">
+                  {timeAgo(comment.created_at)}
                 </span>
               </div>
-              <p className="whitespace-pre-wrap break-words text-gray-800">
+              <p className="whitespace-pre-wrap break-words text-body-sm text-on-surface">
                 {comment.content}
               </p>
             </div>
           ))}
 
-          <form onSubmit={handleSubmit} className="space-y-2">
+          <form onSubmit={handleSubmit} className="space-y-stack-sm">
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               maxLength={MAX_COMMENT_LENGTH}
               rows={2}
               placeholder="Write a comment…"
-              className="w-full resize-none rounded-md border border-gray-200 p-2 text-sm focus:border-blue-500 focus:outline-none"
+              className="w-full resize-none rounded border border-outline-variant bg-white p-2 text-body-sm text-on-surface placeholder:text-outline focus:border-primary focus:outline-none"
             />
-            {error && <p className="text-red-600">{error}</p>}
+            {error && <p className="text-body-sm text-error">{error}</p>}
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-400">
+              <span className="text-body-sm text-outline">
                 {draft.length}/{MAX_COMMENT_LENGTH}
               </span>
               <button
                 type="submit"
                 disabled={pending || draft.trim().length === 0}
-                className="rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="rounded bg-primary px-3 py-1 text-label-bold text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {pending ? "Posting…" : "Comment"}
               </button>

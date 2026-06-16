@@ -36,7 +36,9 @@ export function LikeButton({
       onClick={handleClick}
       disabled={pending}
       aria-pressed={liked}
-      className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-600 disabled:opacity-50"
+      className={`flex shrink-0 items-center gap-1.5 text-body-sm font-bold transition-colors hover:underline disabled:opacity-50 ${
+        liked ? "text-coral" : "text-secondary hover:text-coral"
+      }`}
     >
       <svg
         viewBox="0 0 24 24"
@@ -47,7 +49,7 @@ export function LikeButton({
       >
         <path d="M12 21s-7.5-4.6-10-9.2C.5 9 1.5 5.5 4.5 4.5 7 3.7 9 5 12 8c3-3 5-4.3 7.5-3.5 3 1 4 4.5 2.5 7.3C19.5 16.4 12 21 12 21z" />
       </svg>
-      <span className={liked ? "text-red-600" : ""}>{count}</span>
+      <span>Like ({count})</span>
     </button>
   )
 }
