@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { PostWithAuthor } from "@/lib/types"
 import { timeAgo } from "@/lib/time"
 import { LikeButton } from "@/components/LikeButton"
+import { CommentSection } from "@/components/CommentSection"
 
 export function PostCard({ post }: { post: PostWithAuthor }) {
   const initial = post.username.charAt(0).toUpperCase()
@@ -27,6 +28,7 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
           initialLiked={post.liked_by_me}
           initialCount={post.like_count}
         />
+        <CommentSection postId={post.id} initialCount={post.comment_count} />
       </div>
     </article>
   )

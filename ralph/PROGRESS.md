@@ -22,7 +22,7 @@ verify (`tsc` + `build`), commit, tick it. When all are checked, prepend a line
 ## 6c — Comments
 - [x] 10. `addComment(postId, content)` + `getComments(postId)` server actions (getComments joins author username, oldest first).
 - [x] 11. Extend feed AND profile post queries with `comment_count`.
-- [ ] 12. `CommentSection` client component integrated into `PostCard`: count toggles an inline thread, lazily loads comments on first expand, with a ≤280-char composer.
+- [x] 12. `CommentSection` client component integrated into `PostCard`: count toggles an inline thread, lazily loads comments on first expand, with a ≤280-char composer.
 
 ## Wrap-up
 - [ ] 13. Final pass: `npx tsc --noEmit` + `npm run build` clean; quick self-review of all Phase 6 code for convention adherence; then mark complete.
