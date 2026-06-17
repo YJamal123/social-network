@@ -57,25 +57,44 @@ export default async function ThreadPage({
             aria-live="polite"
             className="flex flex-col gap-2"
           >
-            {messages.map((m) => {
+            {messages.map((m, i) => {
               const mine = m.sender_id === viewerId
+              // Last message of a consecutive same-sender run → show the avatar here.
+              const isRunEnd =
+                i === messages.length - 1 ||
+                messages[i + 1].sender_id !== m.sender_id
               return (
                 <div
                   key={m.id}
-                  className={`flex max-w-[75%] flex-col ${mine ? "ml-auto items-end" : "mr-auto items-start"}`}
+                  className={`flex max-w-[75%] items-end gap-2 ${mine ? "ml-auto flex-row-reverse" : "mr-auto"}`}
                 >
-                  <div
-                    className={`whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-body-base ${
-                      mine
-                        ? "bg-primary text-on-primary"
-                        : "bg-surface-container text-on-surface"
-                    }`}
-                  >
-                    {m.content}
+                  {/* Avatar gutter — partner side only. Avatar on run end, spacer
+                      otherwise, so stacked bubbles in a run stay left-aligned. */}
+                  {!mine &&
+                    (isRunEnd ? (
+                      <Avatar
+                        userId={m.sender_id}
+                        username={m.sender_username}
+                        size="sm"
+                      />
+                    ) : (
+                      <div className="w-10 shrink-0" aria-hidden="true" />
+                    ))}
+
+                  <div className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
+                    <div
+                      className={`whitespace-pre-wrap break-words rounded-lg px-3 py-2 text-body-base ${
+                        mine
+                          ? "bg-primary text-on-primary"
+                          : "bg-surface-container text-on-surface"
+                      }`}
+                    >
+                      {m.content}
+                    </div>
+                    <span className="mt-0.5 text-body-sm text-on-surface-variant">
+                      {timeAgo(m.created_at)}
+                    </span>
                   </div>
-                  <span className="mt-0.5 text-body-sm text-on-surface-variant">
-                    {timeAgo(m.created_at)}
-                  </span>
                 </div>
               )
             })}
