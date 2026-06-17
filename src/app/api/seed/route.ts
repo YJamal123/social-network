@@ -73,6 +73,9 @@ const USERS: DemoUser[] = [
     username: "skater_dave",
     bio: "Econ major who would rather be at the skatepark.",
     school: "Brown",
+    relationshipStatus: "Single",
+    interests: "Skating, sneakers, day-trading beer money",
+    courses: "Intro Econ, Statistics, Game Theory",
     interestedIn: "Women",
     lookingFor: "Whatever I can get",
   },
@@ -90,6 +93,9 @@ const USERS: DemoUser[] = [
     username: "coachrandy",
     bio: "Intramural soccer captain. Practice is NOT optional.",
     school: "Penn",
+    relationshipStatus: "In a relationship",
+    interests: "Soccer, protein shakes, motivational speeches",
+    courses: "Sports Management, Marketing, Nutrition",
     interestedIn: "Women",
     lookingFor: "Friendship",
   },
@@ -107,6 +113,9 @@ const USERS: DemoUser[] = [
     username: "gamer_greg",
     bio: "Halo LAN party in my common room. BYO controller.",
     school: "Dartmouth",
+    relationshipStatus: "It's complicated",
+    interests: "Halo, mechanical keyboards, energy drinks",
+    courses: "CS101, Discrete Math, Game Design",
     interestedIn: "Women",
     lookingFor: "Random play",
   },
@@ -283,6 +292,17 @@ const TAUNTS: [number, number, boolean][] = [
   [8, 0, false], // Dartmouth -> Cornell
   [5, 2, true], // Yale -> Princeton
   [7, 1, false], // Columbia -> Harvard
+  // — enrichment: more cross-school rivalry so every demo user has taunt activity —
+  [0, 2, false], // Cornell -> Princeton
+  [0, 5, true], //  Cornell -> Yale
+  [3, 8, false], // Cornell -> Dartmouth
+  [1, 4, true], //  Harvard -> Brown
+  [5, 1, false], // Yale -> Harvard
+  [6, 3, true], //  Penn -> Cornell
+  [8, 1, false], // Dartmouth -> Harvard
+  [2, 1, true], //  Princeton -> Harvard
+  [7, 3, false], // Columbia -> Cornell
+  [4, 3, true], //  Brown -> Cornell
 ]
 
 // Relationships as [requesterIdx, addresseeIdx, status, confirmed]. PK is the
@@ -291,6 +311,7 @@ const TAUNTS: [number, number, boolean][] = [
 const RELATIONSHIPS: [number, number, string, boolean][] = [
   [1, 5, "In a relationship", true], // harvardhannah <-> artsy_lena (confirmed)
   [2, 7, "It's complicated", true], // djmarcus <-> bookish_mei (confirmed)
+  [3, 6, "In a relationship", true], // priya_codes <-> coachrandy (confirmed)
   [4, 0, "In a relationship", false], // skater_dave -> thefacebook_tom (pending)
 ]
 
