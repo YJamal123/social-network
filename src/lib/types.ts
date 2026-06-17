@@ -106,6 +106,31 @@ export interface RelationshipWithPartner extends Relationship {
   partner_username: string
 }
 
+// A private 1:1 direct message
+export interface Message {
+  id: string
+  sender_id: string
+  recipient_id: string
+  content: string
+  read: boolean
+  created_at: string
+}
+
+// A message joined with the sender's username — used in the thread view
+export interface MessageWithSender extends Message {
+  sender_username: string
+}
+
+// One row per conversation partner — the /messages inbox list
+export interface ConversationSummary {
+  partner_id: string
+  partner_username: string
+  last_content: string
+  last_sender_id: string // so the UI can show a "You: " prefix
+  created_at: string // timestamp of the last message
+  unread: number // unread messages FROM partner TO me
+}
+
 // A newly-joined member — used in the dashboard Directory accordion preview
 export interface RecentUser {
   id: string

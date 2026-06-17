@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { validatePostContent, validateBio, validateComment, MAX_POST_LENGTH, MAX_COMMENT_LENGTH } from "@/lib/validation"
+import { validatePostContent, validateBio, validateComment, validateMessage, MAX_POST_LENGTH, MAX_COMMENT_LENGTH, MAX_MESSAGE_LENGTH } from "@/lib/validation"
 
 describe("validatePostContent", () => {
   it("accepts normal content and returns the trimmed value", () => {
@@ -58,5 +58,30 @@ describe("validateComment", () => {
   it("rejects content over the max length", () => {
     const tooLong = "a".repeat(MAX_COMMENT_LENGTH + 1)
     expect(validateComment(tooLong)).toMatchObject({ ok: false })
+  })
+})
+
+describe("validateMessage", () => {
+  it("accepts normal content and returns the trimmed value", () => {
+    const result = validateMessage("  hey there  ")
+    expect(result).toEqual({ ok: true, value: "hey there" })
+  })
+
+  it("rejects empty content", () => {
+    expect(validateMessage("")).toMatchObject({ ok: false })
+  })
+
+  it("rejects whitespace-only content", () => {
+    expect(validateMessage("   ")).toMatchObject({ ok: false })
+  })
+
+  it("accepts content exactly at the max length", () => {
+    const atLimit = "a".repeat(MAX_MESSAGE_LENGTH)
+    expect(validateMessage(atLimit)).toEqual({ ok: true, value: atLimit })
+  })
+
+  it("rejects content over the max length", () => {
+    const tooLong = "a".repeat(MAX_MESSAGE_LENGTH + 1)
+    expect(validateMessage(tooLong)).toMatchObject({ ok: false })
   })
 })

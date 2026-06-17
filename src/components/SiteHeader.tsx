@@ -3,6 +3,7 @@ import { auth, signOut } from "@/lib/auth"
 import { getUnacknowledgedPokeCount } from "@/app/(main)/pokes/actions"
 import { getUnacknowledgedTauntCount } from "@/app/(main)/taunts/actions"
 import { getPendingRelationshipRequestCount } from "@/app/(main)/profile/actions"
+import { getUnreadMessageCount } from "@/app/(main)/messages/actions"
 
 // Masthead for all (main) routes: solid navy bar, bracketed [ sml ] wordmark,
 // dot-separated text nav, coral poke indicator, and a quick-search box that
@@ -15,6 +16,7 @@ export async function SiteHeader() {
   const relationshipCount = username
     ? await getPendingRelationshipRequestCount()
     : 0
+  const messageCount = username ? await getUnreadMessageCount() : 0
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-outline-variant bg-primary">
@@ -76,6 +78,22 @@ export async function SiteHeader() {
                   className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
                 >
                   {relationshipCount}
+                </span>
+              )}
+            </Link>
+            <span className="opacity-50">·</span>
+            <Link
+              href="/messages"
+              className="flex items-center gap-1 opacity-90 hover:underline hover:opacity-100"
+            >
+              messages
+              {messageCount > 0 && (
+                <span
+                  aria-label={`${messageCount} unread messages`}
+                  aria-live="polite"
+                  className="inline-flex min-w-badge items-center justify-center rounded-full bg-primary px-1 text-body-sm font-bold text-on-primary ring-1 ring-on-primary/40"
+                >
+                  {messageCount}
                 </span>
               )}
             </Link>
@@ -165,6 +183,21 @@ export async function SiteHeader() {
               className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
             >
               {relationshipCount}
+            </span>
+          )}
+        </Link>
+        <Link
+          href="/messages"
+          className="flex items-center gap-1 opacity-90 hover:underline hover:opacity-100"
+        >
+          messages
+          {messageCount > 0 && (
+            <span
+              aria-label={`${messageCount} unread messages`}
+              aria-live="polite"
+              className="inline-flex min-w-badge items-center justify-center rounded-full bg-primary px-1 text-body-sm font-bold text-on-primary ring-1 ring-on-primary/40"
+            >
+              {messageCount}
             </span>
           )}
         </Link>

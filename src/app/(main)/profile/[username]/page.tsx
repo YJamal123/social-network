@@ -13,6 +13,7 @@ import { Avatar } from "@/components/Avatar"
 import { EmptyState } from "@/components/EmptyState"
 import { UserNameTime } from "@/components/UserNameTime"
 import { getWallPosts } from "@/app/(main)/profile/actions"
+import { buttonClass } from "@/lib/ui"
 import type { PostWithAuthor, ProfileUser } from "@/lib/types"
 
 async function getProfile(username: string): Promise<ProfileUser | null> {
@@ -178,6 +179,12 @@ export default async function ProfilePage({
                 ) : (
                   <PokeButton targetUserId={profile.id} />
                 )}
+                <Link
+                  href={`/messages/${profile.username}`}
+                  className={buttonClass.outline}
+                >
+                  Message
+                </Link>
               </div>
             </div>
           </Panel>

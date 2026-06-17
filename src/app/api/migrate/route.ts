@@ -94,6 +94,19 @@ CREATE TABLE IF NOT EXISTS relationships (
 
 CREATE INDEX IF NOT EXISTS relationships_addressee_id_idx ON relationships(addressee_id);
 
+CREATE TABLE IF NOT EXISTS messages (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  sender_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  recipient_id UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content      TEXT        NOT NULL CHECK (char_length(content) <= 280),
+  read         BOOLEAN     NOT NULL DEFAULT false,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (sender_id <> recipient_id)
+);
+
+CREATE INDEX IF NOT EXISTS messages_recipient_id_idx ON messages(recipient_id);
+CREATE INDEX IF NOT EXISTS messages_pair_idx ON messages(sender_id, recipient_id, created_at DESC);
+
 ALTER TABLE users ADD COLUMN IF NOT EXISTS relationship_status TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS interests TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS courses TEXT;

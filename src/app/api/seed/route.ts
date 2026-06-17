@@ -5,7 +5,7 @@ import getPool from "@/lib/db"
 // One-shot, idempotent demo-data seeder. Mirrors /api/migrate: token-guarded and
 // run from inside the VPC (Cloud SQL is private-IP only, unreachable from a laptop).
 // Re-runnable — it first deletes every demo account (email LIKE '%@demo.sml') and
-// the ON DELETE CASCADE wipes their posts/follows/likes/comments/wall_posts/pokes,
+// the ON DELETE CASCADE wipes their posts/follows/likes/comments/wall_posts/pokes/messages,
 // then reinserts.
 // Run once after deploy:
 //   curl -X POST "https://<url>/api/seed?token=$NEXTAUTH_SECRET"
@@ -315,6 +315,23 @@ const RELATIONSHIPS: [number, number, string, boolean][] = [
   [4, 0, "In a relationship", false], // skater_dave -> thefacebook_tom (pending)
 ]
 
+// Messages as [senderIdx, recipientIdx, content, read]. Private 1:1 DMs. A few
+// left read=false (aimed at user 0, thefacebook_tom) so the unread badge shows.
+const MESSAGES: [number, number, string, boolean][] = [
+  [1, 0, "Hey Tom! The directory looks amazing. How'd you build it so fast?", false],
+  [0, 1, "Thanks Hannah! Just a lot of caffeine and raw SQL honestly.", true],
+  [1, 0, "Haha classic. Want to grab coffee and talk shop sometime?", false],
+  [2, 0, "Yo, putting you on the list for Friday. Bring your laptop, we need a DJ-cam operator.", false],
+  [3, 0, "Your LED matrix demo was unreal. Can you show me the wiring sometime?", false],
+  [0, 3, "For sure! Swing by the EE lab tomorrow afternoon.", true],
+  [4, 6, "Coach, signed up for soccer. Please go easy on me at 6am.", true],
+  [6, 4, "No promises. Cleats optional, effort mandatory. See you there.", true],
+  [5, 7, "Saved you a spot at the gallery show — front row, obviously.", true],
+  [7, 5, "You're the best. I'll bring the ramen as payment.", false],
+  [8, 2, "Need that Halo theme remix for the LAN party. Can you cook one up?", true],
+  [2, 8, "Already on it. It's going to slap.", false],
+]
+
 export async function POST(request: Request) {
   const token = new URL(request.url).searchParams.get("token")
   if (!process.env.NEXTAUTH_SECRET || token !== process.env.NEXTAUTH_SECRET) {
@@ -459,6 +476,21 @@ export async function POST(request: Request) {
       relationshipCount++
     }
 
+    // Messages (private 1:1 DMs; some unread so the header indicator shows).
+    // Spread created_at over recent days so threads sort believably.
+    let messageCount = 0
+    let messageHoursAgo = 0
+    for (const [senderIdx, recipientIdx, content, read] of MESSAGES) {
+      messageHoursAgo += 4 + ((senderIdx + recipientIdx) % 5)
+      const offset = Math.min(messageHoursAgo, 240)
+      await client.query(
+        `INSERT INTO messages (sender_id, recipient_id, content, read, created_at)
+         VALUES ($1, $2, $3, $4, now() - ($5 || ' hours')::interval)`,
+        [userIds[senderIdx], userIds[recipientIdx], content, read, offset]
+      )
+      messageCount++
+    }
+
     await client.query("COMMIT")
 
     return NextResponse.json({
@@ -473,6 +505,7 @@ export async function POST(request: Request) {
         pokes: pokeCount,
         taunts: tauntCount,
         relationships: relationshipCount,
+        messages: messageCount,
       },
     })
   } catch (err) {
