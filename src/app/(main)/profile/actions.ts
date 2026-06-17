@@ -7,6 +7,11 @@ import { query } from "@/lib/db"
 import { validatePostContent } from "@/lib/validation"
 import { isValidSchool } from "@/lib/schools"
 import { isValidRelationshipStatus } from "@/lib/relationships"
+import {
+  INTERESTED_IN,
+  LOOKING_FOR,
+  sanitizeSelections,
+} from "@/lib/profileFields"
 import type { RelationshipWithPartner, WallPostWithAuthor } from "@/lib/types"
 
 export type ProfileState = { error?: string }
@@ -56,6 +61,16 @@ export async function updateProfile(
     return { error: "Please select a valid school" }
   }
 
+  // Checkbox groups — sanitize against the server-side whitelist, comma-joined.
+  const interestedIn = sanitizeSelections(
+    formData.getAll("interested_in"),
+    INTERESTED_IN
+  )
+  const lookingFor = sanitizeSelections(
+    formData.getAll("looking_for"),
+    LOOKING_FOR
+  )
+
   try {
     await query(
       `UPDATE users
@@ -63,14 +78,18 @@ export async function updateProfile(
               relationship_status = $2,
               interests = $3,
               courses = $4,
-              school = $5
-        WHERE id = $6`,
+              school = $5,
+              interested_in = $6,
+              looking_for = $7
+        WHERE id = $8`,
       [
         bio || null,
         relationshipStatus || null,
         interests || null,
         courses || null,
         school,
+        interestedIn || null,
+        lookingFor || null,
         session.user.id,
       ]
     )

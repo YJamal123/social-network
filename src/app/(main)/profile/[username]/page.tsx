@@ -18,7 +18,7 @@ import type { PostWithAuthor, ProfileUser } from "@/lib/types"
 async function getProfile(username: string): Promise<ProfileUser | null> {
   const result = await query<ProfileUser>(
     `SELECT u.id, u.username, u.bio, u.relationship_status, u.interests,
-            u.courses, u.school, u.created_at,
+            u.courses, u.school, u.interested_in, u.looking_for, u.created_at,
             (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count,
             (SELECT COUNT(*)::int FROM follows f WHERE f.following_id = u.id) AS follower_count,
             (SELECT COUNT(*)::int FROM follows f WHERE f.follower_id = u.id) AS following_count
@@ -135,7 +135,9 @@ export default async function ProfilePage({
     confirmedPartner ||
     profile.relationship_status ||
     profile.interests ||
-    profile.courses
+    profile.courses ||
+    profile.interested_in ||
+    profile.looking_for
 
   return (
     <main className="mx-auto flex max-w-container-max flex-col gap-gutter px-gutter py-stack-lg md:flex-row">
@@ -256,6 +258,12 @@ export default async function ProfilePage({
                 )}
                 {profile.courses && (
                   <InfoRow label="Courses" value={profile.courses} />
+                )}
+                {profile.interested_in && (
+                  <InfoRow label="Interested In" value={profile.interested_in} />
+                )}
+                {profile.looking_for && (
+                  <InfoRow label="Looking For" value={profile.looking_for} />
                 )}
               </dl>
             )}

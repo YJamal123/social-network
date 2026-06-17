@@ -8,6 +8,8 @@ export interface User {
   interests: string | null
   courses: string | null
   school: string | null
+  interested_in: string | null
+  looking_for: string | null
   created_at: string
 }
 
@@ -128,6 +130,8 @@ export interface ProfileUser {
   interests: string | null
   courses: string | null
   school: string | null
+  interested_in: string | null
+  looking_for: string | null
   created_at: string
   post_count: number
   follower_count: number

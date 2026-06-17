@@ -7,6 +7,11 @@ import { Panel } from "@/components/Panel"
 import { RelationshipProposer } from "@/components/RelationshipProposer"
 import { fieldClass } from "@/lib/ui"
 import { SCHOOLS } from "@/lib/schools"
+import {
+  INTERESTED_IN,
+  LOOKING_FOR,
+  parseSelections,
+} from "@/lib/profileFields"
 
 const MAX_BIO = 280
 const MAX_RELATIONSHIP = 50
@@ -15,6 +20,41 @@ const MAX_COURSES = 280
 
 const labelClass = "block text-label-bold text-secondary"
 
+function CheckboxGroup({
+  legend,
+  name,
+  options,
+  selected,
+}: {
+  legend: string
+  name: string
+  options: readonly string[]
+  selected: string[]
+}) {
+  return (
+    <fieldset>
+      <legend className={labelClass}>{legend}</legend>
+      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+        {options.map((option) => (
+          <label
+            key={option}
+            className="flex items-center gap-1.5 text-body-sm text-on-surface"
+          >
+            <input
+              type="checkbox"
+              name={name}
+              value={option}
+              defaultChecked={selected.includes(option)}
+              className="accent-primary"
+            />
+            {option}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  )
+}
+
 export function ProfileEditForm({
   username,
   initialBio,
@@ -22,6 +62,8 @@ export function ProfileEditForm({
   initialInterests,
   initialCourses,
   initialSchool,
+  initialInterestedIn,
+  initialLookingFor,
 }: {
   username: string
   initialBio: string
@@ -29,8 +71,12 @@ export function ProfileEditForm({
   initialInterests: string
   initialCourses: string
   initialSchool: string
+  initialInterestedIn: string
+  initialLookingFor: string
 }) {
   const [state, formAction] = useFormState(updateProfile, {})
+  const interestedIn = parseSelections(initialInterestedIn)
+  const lookingFor = parseSelections(initialLookingFor)
 
   return (
     <Panel title="Edit Profile">
@@ -107,6 +153,20 @@ export function ProfileEditForm({
             className={`${fieldClass} mt-1 resize-none`}
           />
         </label>
+
+        <CheckboxGroup
+          legend="Interested in"
+          name="interested_in"
+          options={INTERESTED_IN}
+          selected={interestedIn}
+        />
+
+        <CheckboxGroup
+          legend="Looking for"
+          name="looking_for"
+          options={LOOKING_FOR}
+          selected={lookingFor}
+        />
 
         <div className="flex items-center justify-end gap-3">
           <Link

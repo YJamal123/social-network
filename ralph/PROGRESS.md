@@ -26,7 +26,7 @@ COMPLETE` the exact first line of this file and commit.
 - [x] 12. Requests surface (fork `/pokes/page.tsx` shape) with `confirmRelationship`; pending indicator in `SiteHeader.tsx`.
 
 ## Feature 5 — "Interested In" + "Looking For"
-- [ ] 13. Migrate: `ALTER TABLE users ADD COLUMN IF NOT EXISTS interested_in TEXT` + `looking_for TEXT` (comma-joined like `interests`). `updateProfile` reads/validates (server-side whitelist) + persists both. Add to `User`/`ProfileUser` types. `ProfileEditForm.tsx`: checkbox groups (Interested in: Men/Women; Looking For: Friendship/A relationship/Dating/Whatever I can get/Random play) comma-joined; render two InfoRows on the profile.
+- [x] 13. Migrate: `ALTER TABLE users ADD COLUMN IF NOT EXISTS interested_in TEXT` + `looking_for TEXT` (comma-joined like `interests`). `updateProfile` reads/validates (server-side whitelist) + persists both. Add to `User`/`ProfileUser` types. `ProfileEditForm.tsx`: checkbox groups (Interested in: Men/Women; Looking For: Friendship/A relationship/Dating/Whatever I can get/Random play) comma-joined; render two InfoRows on the profile.
 
 ## Seed + wrap-up
 - [ ] 14. Extend `src/app/api/seed/route.ts`: give demo users varied Ivy `school` values, a few cross-school `taunts` (some unacknowledged), one or two confirmed `relationships`, and `interested_in`/`looking_for` values. Keep in the existing idempotent transaction; add the new counts to the returned JSON.

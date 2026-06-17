@@ -21,8 +21,10 @@ export default async function EditProfilePage({
     interests: string | null
     courses: string | null
     school: string | null
+    interested_in: string | null
+    looking_for: string | null
   }>(
-    "SELECT bio, relationship_status, interests, courses, school FROM users WHERE id = $1",
+    "SELECT bio, relationship_status, interests, courses, school, interested_in, looking_for FROM users WHERE id = $1",
     [session.user.id]
   )
   const row = result.rows[0]
@@ -37,6 +39,8 @@ export default async function EditProfilePage({
         initialInterests={row?.interests ?? ""}
         initialCourses={row?.courses ?? ""}
         initialSchool={row?.school ?? ""}
+        initialInterestedIn={row?.interested_in ?? ""}
+        initialLookingFor={row?.looking_for ?? ""}
       />
     </main>
   )
