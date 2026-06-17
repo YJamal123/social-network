@@ -23,7 +23,7 @@ COMPLETE` the exact first line of this file and commit.
 - [x] 9. Migrate: `relationships` table (requester_id, addressee_id, status, confirmed, created_at, PK pair). Keep legacy free-text `users.relationship_status` for solo statuses. Types `Relationship`, `RelationshipWithPartner`.
 - [x] 10. `profile/actions.ts`: `proposeRelationship(addresseeId, status)` (upsert confirmed=false, reject self, clear prior unconfirmed), `confirmRelationship(requesterId)`, `getPendingRelationshipRequests` + count.
 - [x] 11. `ProfileEditForm.tsx`: status `<select>` + optional partner-username field calling `proposeRelationship`. Profile Information panel: when confirmed, render "In a relationship with @partner" linked.
-- [ ] 12. Requests surface (fork `/pokes/page.tsx` shape) with `confirmRelationship`; pending indicator in `SiteHeader.tsx`.
+- [x] 12. Requests surface (fork `/pokes/page.tsx` shape) with `confirmRelationship`; pending indicator in `SiteHeader.tsx`.
 
 ## Feature 5 — "Interested In" + "Looking For"
 - [ ] 13. Migrate: `ALTER TABLE users ADD COLUMN IF NOT EXISTS interested_in TEXT` + `looking_for TEXT` (comma-joined like `interests`). `updateProfile` reads/validates (server-side whitelist) + persists both. Add to `User`/`ProfileUser` types. `ProfileEditForm.tsx`: checkbox groups (Interested in: Men/Women; Looking For: Friendship/A relationship/Dating/Whatever I can get/Random play) comma-joined; render two InfoRows on the profile.
