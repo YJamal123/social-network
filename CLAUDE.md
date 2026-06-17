@@ -15,7 +15,7 @@ A minimal social network (Facebook 2004 era) built for a timed technical intervi
 | Styling | Tailwind CSS |
 | Database | Cloud SQL — PostgreSQL 15 |
 | DB client | `pg` (node-postgres) with raw SQL — no ORM |
-| Auth | NextAuth.js v5 (credentials provider) — sessions in DB |
+| Auth | NextAuth.js v5 (credentials provider) — JWT sessions |
 | Compute | Cloud Run (containerized via Dockerfile) |
 | Container registry | Artifact Registry (`us-central1`) |
 | Secrets | Secret Manager (DB URL, NextAuth secret) |
@@ -59,7 +59,7 @@ src/
 
 ## Coding Standards
 
-- **No ORM.** Use raw SQL via `pg`. Schema lives in `schema.sql` at project root.
+- **No ORM.** Use raw SQL via `pg`. The authoritative schema is the inlined `SCHEMA` string in `src/app/api/migrate/route.ts` (idempotent, applied via the migrate route); `schema.sql` at root is a stale reference copy.
 - **Server Actions** for mutations (post creation, profile update). Route Handlers for read APIs.
 - **Mutations return `{ error?: string }`, they don't throw** (except `redirect()`). Client components surface the error inline and only reset/clear on success. See `register` and `createPost`. The one exception: `redirect()` must throw, so call it after the try/catch.
 - **One DB pool.** `src/lib/db.ts` exports a single `Pool` — never instantiate `Pool` elsewhere.
@@ -68,39 +68,25 @@ src/
 - **Tailwind only** for styling — no inline `style={}` props.
 - **No `any` types.** Define types in `src/lib/types.ts`.
 
-## Database Schema (`schema.sql`)
+## Database Schema
 
-```sql
--- Run once on Cloud SQL instance before first deploy
-CREATE TABLE users (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  username    TEXT UNIQUE NOT NULL,
-  email       TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  bio         TEXT,
-  created_at  TIMESTAMPTZ DEFAULT now()
-);
+Authoritative schema is the `SCHEMA` string in `src/app/api/migrate/route.ts` (idempotent:
+`CREATE TABLE IF NOT EXISTS` / `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`), applied post-deploy
+via `curl -X POST ".../api/migrate?token=$NEXTAUTH_SECRET"`. Current tables:
 
-CREATE TABLE posts (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     UUID REFERENCES users(id) ON DELETE CASCADE,
-  content     TEXT NOT NULL CHECK (char_length(content) <= 280),
-  created_at  TIMESTAMPTZ DEFAULT now()
-);
+- **users** — `id, username, email, password_hash, bio, created_at` plus added columns:
+  `relationship_status, interests, courses, school, interested_in, looking_for, avatar (BYTEA), avatar_mime`
+- **posts** — `id, user_id→users, content (≤280), created_at`
+- **comments** — `id, post_id→posts, user_id→users, content (≤280), created_at`
+- **wall_posts** — `id, owner_id→users, author_id→users, content (≤280), created_at` (author posts on owner's wall)
+- **follows** — PK `(follower_id, following_id)`, one-directional
+- **likes** — PK `(user_id, post_id)`
+- **pokes** — PK `(poker_id, pokee_id)`, `acknowledged` — contentless ping
+- **taunts** — PK `(taunter_id, tauntee_id)`, `acknowledged` — Poke variant, **only between users at *different* schools** (rival-school guard in `taunt()`)
+- **relationships** — PK `(requester_id, addressee_id)`, `status`, `confirmed` — mutually-confirmed linked partner (the free-text `users.relationship_status` still holds *solo* statuses)
 
--- Stretch goal tables (add if time permits)
-CREATE TABLE follows (
-  follower_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  following_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  PRIMARY KEY (follower_id, following_id)
-);
-
-CREATE TABLE likes (
-  user_id   UUID REFERENCES users(id) ON DELETE CASCADE,
-  post_id   UUID REFERENCES posts(id) ON DELETE CASCADE,
-  PRIMARY KEY (user_id, post_id)
-);
-```
+**`school` is required at registration** and validated against the `SCHOOLS` const in `src/lib/schools.ts`.
+Avatars are stored as `bytea` in `users` and served by `GET /api/avatar/[id]` (uploaded image or initials-SVG fallback).
 
 ## Environment Variables
 
@@ -120,6 +106,15 @@ These are **never in the repo**. Set in Secret Manager and wired to Cloud Run.
 - **`authorize()` returns `null` on failure, never throws.** Throwing yields a 500 instead of a graceful "invalid credentials". Login form calls `signIn(..., { redirect: false })` and handles the error in the UI.
 - **`redirect()` must live outside try/catch.** Next's `redirect()` works by throwing — a surrounding catch swallows it. Same applies to server actions (see register action).
 - **`secret`/`trustHost` set explicitly in config.** v5 defaults to `AUTH_SECRET`, but our Secret Manager value mounts as `NEXTAUTH_SECRET`, so `auth.config.ts` passes `secret: process.env.NEXTAUTH_SECRET` and `trustHost: true` (required behind Cloud Run's proxy).
+
+## Testing & the QA Gate
+
+- **Test runner:** Vitest. Run with `npm test` (`vitest run`) or `npm run test:watch`. Tests live next to the code as `src/**/*.test.ts`.
+- **What we test:** pure logic only — validation/formatting helpers in `src/lib/` (e.g. `validation.ts`, `time.ts`). Do **not** unit-test React components, server actions that hit the DB/auth, or anything needing live Postgres — there's no DB locally. Keep extractable logic as pure functions in `src/lib/` so it stays testable.
+- **Automated QA gate on push:** `.git/hooks/pre-push` runs before every `git push` from *any* session. It invokes the `qa-runner` subagent (`.claude/agents/qa-runner.md`) headless, which adds tests for new pure logic, runs `npm test` + `npx tsc --noEmit`, and prints `QA_VERDICT: PASS`/`FAIL`. **A FAIL blocks the push.**
+  - Bypass for a trivial/docs-only change: `git push --no-verify`.
+  - The hook lives in `.git/hooks/` (not version-controlled) — it's local to this clone. Re-create it after a fresh clone if needed.
+  - Last run is logged to `.claude/.qa-last-run.log`.
 
 ## Never Do This
 
