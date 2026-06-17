@@ -20,7 +20,7 @@ COMPLETE` the exact first line of this file and commit.
 - [x] 8. `getHeadToHead(schoolA, schoolB)` in `taunts/actions.ts` (COUNT taunts grouped by taunter school, filtered to the two schools; no new schema). Render "SchoolA N — M SchoolB" on the `/taunts` page header (viewer's school vs most-recent taunter's school, fallback Cornell vs Harvard).
 
 ## Feature 4 — "In a Relationship with [link]" (mutual confirm)
-- [ ] 9. Migrate: `relationships` table (requester_id, addressee_id, status, confirmed, created_at, PK pair). Keep legacy free-text `users.relationship_status` for solo statuses. Types `Relationship`, `RelationshipWithPartner`.
+- [x] 9. Migrate: `relationships` table (requester_id, addressee_id, status, confirmed, created_at, PK pair). Keep legacy free-text `users.relationship_status` for solo statuses. Types `Relationship`, `RelationshipWithPartner`.
 - [ ] 10. `profile/actions.ts`: `proposeRelationship(addresseeId, status)` (upsert confirmed=false, reject self, clear prior unconfirmed), `confirmRelationship(requesterId)`, `getPendingRelationshipRequests` + count.
 - [ ] 11. `ProfileEditForm.tsx`: status `<select>` + optional partner-username field calling `proposeRelationship`. Profile Information panel: when confirmed, render "In a relationship with @partner" linked.
 - [ ] 12. Requests surface (fork `/pokes/page.tsx` shape) with `confirmRelationship`; pending indicator in `SiteHeader.tsx`.

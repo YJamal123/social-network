@@ -90,6 +90,20 @@ export interface TauntWithTaunter extends Taunt {
   taunter_school: string | null
 }
 
+// A relationship link between two users (one row per pair, mutual-confirm)
+export interface Relationship {
+  requester_id: string
+  addressee_id: string
+  status: string
+  confirmed: boolean
+  created_at: string
+}
+
+// A relationship joined with the partner's username — used in profile + requests surface
+export interface RelationshipWithPartner extends Relationship {
+  partner_username: string
+}
+
 // A newly-joined member — used in the dashboard Directory accordion preview
 export interface RecentUser {
   id: string

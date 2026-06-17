@@ -83,6 +83,17 @@ CREATE TABLE IF NOT EXISTS taunts (
 
 CREATE INDEX IF NOT EXISTS taunts_tauntee_id_idx ON taunts(tauntee_id);
 
+CREATE TABLE IF NOT EXISTS relationships (
+  requester_id UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  addressee_id UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status       TEXT        NOT NULL,
+  confirmed    BOOLEAN     NOT NULL DEFAULT false,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (requester_id, addressee_id)
+);
+
+CREATE INDEX IF NOT EXISTS relationships_addressee_id_idx ON relationships(addressee_id);
+
 ALTER TABLE users ADD COLUMN IF NOT EXISTS relationship_status TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS interests TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS courses TEXT;
