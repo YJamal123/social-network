@@ -73,6 +73,16 @@ CREATE TABLE IF NOT EXISTS pokes (
 
 CREATE INDEX IF NOT EXISTS pokes_pokee_id_idx ON pokes(pokee_id);
 
+CREATE TABLE IF NOT EXISTS taunts (
+  taunter_id   UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  tauntee_id   UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  acknowledged BOOLEAN     NOT NULL DEFAULT false,
+  PRIMARY KEY (taunter_id, tauntee_id)
+);
+
+CREATE INDEX IF NOT EXISTS taunts_tauntee_id_idx ON taunts(tauntee_id);
+
 ALTER TABLE users ADD COLUMN IF NOT EXISTS relationship_status TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS interests TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS courses TEXT;

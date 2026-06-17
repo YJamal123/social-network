@@ -76,6 +76,20 @@ export interface PokeWithPoker extends Poke {
   poker_username: string
 }
 
+// A taunt from one user to another (cross-school poke variant)
+export interface Taunt {
+  taunter_id: string
+  tauntee_id: string
+  created_at: string
+  acknowledged: boolean
+}
+
+// A taunt joined with the taunter's username + school — used in the /taunts list
+export interface TauntWithTaunter extends Taunt {
+  taunter_username: string
+  taunter_school: string | null
+}
+
 // A newly-joined member — used in the dashboard Directory accordion preview
 export interface RecentUser {
   id: string
