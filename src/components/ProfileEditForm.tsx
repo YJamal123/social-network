@@ -4,6 +4,7 @@ import { useFormState } from "react-dom"
 import Link from "next/link"
 import { updateProfile } from "@/app/(main)/profile/actions"
 import { Panel } from "@/components/Panel"
+import { RelationshipProposer } from "@/components/RelationshipProposer"
 import { fieldClass } from "@/lib/ui"
 import { SCHOOLS } from "@/lib/schools"
 
@@ -122,6 +123,10 @@ export function ProfileEditForm({
           </button>
         </div>
       </form>
+
+      <div className="mt-4">
+        <RelationshipProposer />
+      </div>
     </Panel>
   )
 }

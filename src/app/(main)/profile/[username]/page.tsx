@@ -37,6 +37,27 @@ async function getViewerSchool(viewerId: string): Promise<string | null> {
   return result.rows[0]?.school ?? null
 }
 
+// The confirmed partner (if any) for the profile being viewed. One linked
+// relationship per pair; the partner is whichever side isn't this user. Newest
+// confirmed row wins.
+async function getConfirmedPartner(
+  userId: string
+): Promise<{ username: string; status: string } | null> {
+  const result = await query<{ username: string; status: string }>(
+    `SELECT u.username, r.status
+       FROM relationships r
+       JOIN users u
+         ON u.id = CASE WHEN r.requester_id = $1
+                        THEN r.addressee_id ELSE r.requester_id END
+      WHERE r.confirmed = true
+        AND (r.requester_id = $1 OR r.addressee_id = $1)
+      ORDER BY r.created_at DESC
+      LIMIT 1`,
+    [userId]
+  )
+  return result.rows[0] ?? null
+}
+
 async function isFollowing(
   followerId: string,
   targetUserId: string
@@ -101,6 +122,7 @@ export default async function ProfilePage({
   const canTaunt = Boolean(
     viewerSchool && profile.school && viewerSchool !== profile.school
   )
+  const confirmedPartner = await getConfirmedPartner(profile.id)
   const posts = await getUserPosts(profile.id, session?.user?.id ?? null)
   const wallPosts = await getWallPosts(profile.id)
 
@@ -110,6 +132,7 @@ export default async function ProfilePage({
   })
   const hasExtra =
     profile.school ||
+    confirmedPartner ||
     profile.relationship_status ||
     profile.interests ||
     profile.courses
@@ -205,6 +228,22 @@ export default async function ProfilePage({
               <dl className="grid grid-cols-3 gap-2">
                 {profile.school && (
                   <InfoRow label="School" value={profile.school} />
+                )}
+                {confirmedPartner && (
+                  <>
+                    <dt className="text-body-sm text-secondary">
+                      Relationship
+                    </dt>
+                    <dd className="col-span-2 break-words text-body-sm text-on-surface">
+                      {confirmedPartner.status} with{" "}
+                      <Link
+                        href={`/profile/${confirmedPartner.username}`}
+                        className="text-primary hover:underline"
+                      >
+                        @{confirmedPartner.username}
+                      </Link>
+                    </dd>
+                  </>
                 )}
                 {profile.relationship_status && (
                   <InfoRow

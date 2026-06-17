@@ -176,6 +176,46 @@ export async function proposeRelationship(
   return {}
 }
 
+// Form-facing wrapper: the ProfileEditForm only knows the partner's username, so
+// resolve it to an id and delegate to proposeRelationship (which owns the self
+// no-op, status validation, upsert, and revalidation). Returns the same
+// { error? } shape so the proposer surfaces failures inline.
+export async function proposeRelationshipByUsername(
+  partnerUsername: string,
+  status: string
+): Promise<RelationshipActionState> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: "You must be logged in" }
+  }
+
+  const username = partnerUsername.trim()
+  if (!username) {
+    return { error: "Please enter your partner's username" }
+  }
+  if (!isValidRelationshipStatus(status)) {
+    return { error: "Please choose a valid relationship status" }
+  }
+
+  let addresseeId: string
+  try {
+    const result = await query<{ id: string }>(
+      "SELECT id FROM users WHERE username = $1",
+      [username]
+    )
+    const row = result.rows[0]
+    if (!row) {
+      return { error: "No user with that username" }
+    }
+    addresseeId = row.id
+  } catch (err) {
+    console.error("Lookup partner failed:", err)
+    return { error: "Failed to propose relationship" }
+  }
+
+  return proposeRelationship(addresseeId, status)
+}
+
 // Confirm a relationship proposed TO the current user. Sets confirmed=true on
 // the row where the current user is the addressee (mirrors pokeBack). Self is
 // impossible here (you can't appear in your own requests list). Revalidates so
