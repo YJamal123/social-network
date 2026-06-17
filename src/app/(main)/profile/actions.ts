@@ -6,7 +6,8 @@ import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { validatePostContent } from "@/lib/validation"
 import { isValidSchool } from "@/lib/schools"
-import type { WallPostWithAuthor } from "@/lib/types"
+import { isValidRelationshipStatus } from "@/lib/relationships"
+import type { RelationshipWithPartner, WallPostWithAuthor } from "@/lib/types"
 
 export type ProfileState = { error?: string }
 
@@ -124,6 +125,131 @@ export async function toggleFollow(targetUserId: string): Promise<FollowState> {
   revalidatePath("/feed")
   revalidatePath("/profile/[username]", "page")
   return {}
+}
+
+export type RelationshipActionState = { error?: string }
+
+// Propose a relationship link to another user. Upserts an unconfirmed row with
+// the chosen status — the addressee must confirm before it shows publicly.
+// Self-link is silently ignored. Only one outstanding proposal per requester:
+// prior unconfirmed proposals are cleared first. Revalidates the target profile
+// and the /relationships requests surface so indicators stay in sync.
+export async function proposeRelationship(
+  addresseeId: string,
+  status: string
+): Promise<RelationshipActionState> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: "You must be logged in" }
+  }
+
+  const requesterId = session.user.id
+  if (requesterId === addresseeId) {
+    // Ignore self-link — not an error, just a no-op.
+    return {}
+  }
+
+  if (!isValidRelationshipStatus(status)) {
+    return { error: "Please choose a valid relationship status" }
+  }
+
+  try {
+    // One outstanding proposal per requester — drop any prior unconfirmed ones.
+    await query(
+      "DELETE FROM relationships WHERE requester_id = $1 AND confirmed = false",
+      [requesterId]
+    )
+    await query(
+      `INSERT INTO relationships (requester_id, addressee_id, status, confirmed)
+       VALUES ($1, $2, $3, false)
+       ON CONFLICT (requester_id, addressee_id)
+       DO UPDATE SET status = EXCLUDED.status, confirmed = false, created_at = now()`,
+      [requesterId, addresseeId, status]
+    )
+  } catch (err) {
+    console.error("Propose relationship failed:", err)
+    return { error: "Failed to propose relationship" }
+  }
+
+  revalidatePath("/profile/[username]", "page")
+  revalidatePath("/relationships")
+  return {}
+}
+
+// Confirm a relationship proposed TO the current user. Sets confirmed=true on
+// the row where the current user is the addressee (mirrors pokeBack). Self is
+// impossible here (you can't appear in your own requests list). Revalidates so
+// both the indicator and the profile link update.
+export async function confirmRelationship(
+  requesterId: string
+): Promise<RelationshipActionState> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { error: "You must be logged in" }
+  }
+
+  const meId = session.user.id
+  if (requesterId === meId) {
+    return {}
+  }
+
+  try {
+    await query(
+      "UPDATE relationships SET confirmed = true WHERE requester_id = $1 AND addressee_id = $2",
+      [requesterId, meId]
+    )
+  } catch (err) {
+    console.error("Confirm relationship failed:", err)
+    return { error: "Failed to confirm relationship" }
+  }
+
+  revalidatePath("/profile/[username]", "page")
+  revalidatePath("/relationships")
+  return {}
+}
+
+// Count relationship proposals aimed at the current user that they haven't
+// confirmed yet. Used by the SiteHeader indicator. Returns 0 when logged out
+// or on error.
+export async function getPendingRelationshipRequestCount(): Promise<number> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return 0
+  }
+
+  try {
+    const result = await query<{ count: number }>(
+      "SELECT COUNT(*)::int AS count FROM relationships WHERE addressee_id = $1 AND confirmed = false",
+      [session.user.id]
+    )
+    return result.rows[0]?.count ?? 0
+  } catch (err) {
+    console.error("Count relationship requests failed:", err)
+    return 0
+  }
+}
+
+// List relationship proposals aimed at the current user awaiting confirmation,
+// joined with the requester's (partner's) username, newest first. Used by the
+// /relationships requests surface.
+export async function getPendingRelationshipRequests(): Promise<
+  RelationshipWithPartner[]
+> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return []
+  }
+
+  const result = await query<RelationshipWithPartner>(
+    `SELECT r.requester_id, r.addressee_id, r.status, r.confirmed, r.created_at,
+            u.username AS partner_username
+     FROM relationships r
+     JOIN users u ON u.id = r.requester_id
+     WHERE r.addressee_id = $1 AND r.confirmed = false
+     ORDER BY r.created_at DESC`,
+    [session.user.id]
+  )
+  return result.rows
 }
 
 export type WallState = { error?: string }
