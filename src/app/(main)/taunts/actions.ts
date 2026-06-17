@@ -157,3 +157,52 @@ export async function getTaunters(): Promise<TauntWithTaunter[]> {
   )
   return result.rows
 }
+
+// The current viewer's own school, used to anchor the head-to-head scoreboard.
+// Returns null when logged out, school unset, or on error.
+export async function getViewerSchool(): Promise<string | null> {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return null
+  }
+
+  try {
+    const result = await query<{ school: string | null }>(
+      "SELECT school FROM users WHERE id = $1",
+      [session.user.id]
+    )
+    return result.rows[0]?.school ?? null
+  } catch (err) {
+    console.error("Get viewer school failed:", err)
+    return null
+  }
+}
+
+// Head-to-head taunt tally between two rival schools. Counts cross-school taunts
+// launched BY each side against the other and returns them as { a, b } keyed to
+// the argument order. Used for the "SchoolA N — M SchoolB" scoreboard. Returns
+// zeroes on error so the page still renders.
+export async function getHeadToHead(
+  schoolA: string,
+  schoolB: string
+): Promise<{ a: number; b: number }> {
+  try {
+    const result = await query<{ school: string; count: number }>(
+      `SELECT tr.school AS school, COUNT(*)::int AS count
+       FROM taunts t
+       JOIN users tr ON tr.id = t.taunter_id
+       JOIN users te ON te.id = t.tauntee_id
+       WHERE tr.school IN ($1, $2)
+         AND te.school IN ($1, $2)
+         AND tr.school <> te.school
+       GROUP BY tr.school`,
+      [schoolA, schoolB]
+    )
+    const a = result.rows.find((r) => r.school === schoolA)?.count ?? 0
+    const b = result.rows.find((r) => r.school === schoolB)?.count ?? 0
+    return { a, b }
+  } catch (err) {
+    console.error("Head-to-head failed:", err)
+    return { a: 0, b: 0 }
+  }
+}

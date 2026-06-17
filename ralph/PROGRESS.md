@@ -17,7 +17,7 @@ COMPLETE` the exact first line of this file and commit.
 - [x] 7. `/taunts/page.tsx` (fork `/pokes/page.tsx`) with `tauntBack`; add a "taunts" nav link + coral count badge in `SiteHeader.tsx` (reuse poke-badge markup, `getUnacknowledgedTauntCount`).
 
 ## Feature 3 — Head-to-head Rivalry Stats
-- [ ] 8. `getHeadToHead(schoolA, schoolB)` in `taunts/actions.ts` (COUNT taunts grouped by taunter school, filtered to the two schools; no new schema). Render "SchoolA N — M SchoolB" on the `/taunts` page header (viewer's school vs most-recent taunter's school, fallback Cornell vs Harvard).
+- [x] 8. `getHeadToHead(schoolA, schoolB)` in `taunts/actions.ts` (COUNT taunts grouped by taunter school, filtered to the two schools; no new schema). Render "SchoolA N — M SchoolB" on the `/taunts` page header (viewer's school vs most-recent taunter's school, fallback Cornell vs Harvard).
 
 ## Feature 4 — "In a Relationship with [link]" (mutual confirm)
 - [ ] 9. Migrate: `relationships` table (requester_id, addressee_id, status, confirmed, created_at, PK pair). Keep legacy free-text `users.relationship_status` for solo statuses. Types `Relationship`, `RelationshipWithPartner`.
