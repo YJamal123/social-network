@@ -4,6 +4,7 @@ import { useFormState } from "react-dom"
 import Link from "next/link"
 import { register } from "./actions"
 import { buttonClass, fieldClass } from "@/lib/ui"
+import { SCHOOLS } from "@/lib/schools"
 
 export default function RegisterPage() {
   const [state, formAction] = useFormState(register, {})
@@ -45,6 +46,16 @@ export default function RegisterPage() {
             minLength={6}
             className={fieldClass}
           />
+          <select name="school" required defaultValue="" className={fieldClass}>
+            <option value="" disabled>
+              Select your school
+            </option>
+            {SCHOOLS.map((school) => (
+              <option key={school} value={school}>
+                {school}
+              </option>
+            ))}
+          </select>
 
           <button
             type="submit"
