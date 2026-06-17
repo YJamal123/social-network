@@ -14,7 +14,7 @@ COMPLETE` the exact first line of this file and commit.
 - [x] 4. Migrate: `taunts` table (mirror `pokes`: taunter_id, tauntee_id, created_at, acknowledged, PK pair) + `taunts_tauntee_id_idx`. Types `Taunt`, `TauntWithTaunter` (taunter_username, taunter_school).
 - [x] 5. `src/app/(main)/taunts/actions.ts` (fork `pokes/actions.ts`): `taunt(targetId)` with auth guard, self no-op, AND same-school guard (reject if same school or either null); `getUnacknowledgedTauntCount`, `tauntBack`, `acknowledgeTaunts`, `getTaunters`.
 - [x] 6. `TauntButton.tsx` (fork PokeButton, label "Taunt!") + `TauntBackButton.tsx` + `TauntsAck.tsx`. On `profile/[username]/page.tsx` Connection panel: render `TauntButton` when viewer.school ≠ profile.school else `PokeButton` (thread both schools from the page).
-- [ ] 7. `/taunts/page.tsx` (fork `/pokes/page.tsx`) with `tauntBack`; add a "taunts" nav link + coral count badge in `SiteHeader.tsx` (reuse poke-badge markup, `getUnacknowledgedTauntCount`).
+- [x] 7. `/taunts/page.tsx` (fork `/pokes/page.tsx`) with `tauntBack`; add a "taunts" nav link + coral count badge in `SiteHeader.tsx` (reuse poke-badge markup, `getUnacknowledgedTauntCount`).
 
 ## Feature 3 — Head-to-head Rivalry Stats
 - [ ] 8. `getHeadToHead(schoolA, schoolB)` in `taunts/actions.ts` (COUNT taunts grouped by taunter school, filtered to the two schools; no new schema). Render "SchoolA N — M SchoolB" on the `/taunts` page header (viewer's school vs most-recent taunter's school, fallback Cornell vs Harvard).

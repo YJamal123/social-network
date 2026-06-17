@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { auth, signOut } from "@/lib/auth"
 import { getUnacknowledgedPokeCount } from "@/app/(main)/pokes/actions"
+import { getUnacknowledgedTauntCount } from "@/app/(main)/taunts/actions"
 
 // Masthead for all (main) routes: solid navy bar, bracketed [ sml ] wordmark,
 // dot-separated text nav, coral poke indicator, and a quick-search box that
@@ -9,6 +10,7 @@ export async function SiteHeader() {
   const session = await auth()
   const username = session?.user?.name
   const pokeCount = username ? await getUnacknowledgedPokeCount() : 0
+  const tauntCount = username ? await getUnacknowledgedTauntCount() : 0
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-outline-variant bg-primary">
@@ -38,6 +40,22 @@ export async function SiteHeader() {
                   className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
                 >
                   {pokeCount}
+                </span>
+              )}
+            </Link>
+            <span className="opacity-50">·</span>
+            <Link
+              href="/taunts"
+              className="flex items-center gap-1 opacity-90 hover:underline hover:opacity-100"
+            >
+              taunts
+              {tauntCount > 0 && (
+                <span
+                  aria-label={`${tauntCount} new taunts`}
+                  aria-live="polite"
+                  className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
+                >
+                  {tauntCount}
                 </span>
               )}
             </Link>
@@ -97,6 +115,21 @@ export async function SiteHeader() {
               className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
             >
               {pokeCount}
+            </span>
+          )}
+        </Link>
+        <Link
+          href="/taunts"
+          className="flex items-center gap-1 opacity-90 hover:underline hover:opacity-100"
+        >
+          taunts
+          {tauntCount > 0 && (
+            <span
+              aria-label={`${tauntCount} new taunts`}
+              aria-live="polite"
+              className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
+            >
+              {tauntCount}
             </span>
           )}
         </Link>
