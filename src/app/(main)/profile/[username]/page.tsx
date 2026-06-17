@@ -6,6 +6,7 @@ import { fetchPosts } from "@/lib/queries"
 import { PostCard } from "@/components/PostCard"
 import { FollowButton } from "@/components/FollowButton"
 import { PokeButton } from "@/components/PokeButton"
+import { TauntButton } from "@/components/TauntButton"
 import { WallComposer } from "@/components/WallComposer"
 import { Panel } from "@/components/Panel"
 import { Avatar } from "@/components/Avatar"
@@ -26,6 +27,14 @@ async function getProfile(username: string): Promise<ProfileUser | null> {
     [username]
   )
   return result.rows[0] ?? null
+}
+
+async function getViewerSchool(viewerId: string): Promise<string | null> {
+  const result = await query<{ school: string | null }>(
+    "SELECT school FROM users WHERE id = $1",
+    [viewerId]
+  )
+  return result.rows[0]?.school ?? null
 }
 
 async function isFollowing(
@@ -84,6 +93,14 @@ export default async function ProfilePage({
     session?.user?.id && !isOwnProfile
       ? await isFollowing(session.user.id, profile.id)
       : false
+  const viewerSchool =
+    session?.user?.id && !isOwnProfile
+      ? await getViewerSchool(session.user.id)
+      : null
+  // Cross-school viewers taunt; same-school (or missing-school) viewers poke.
+  const canTaunt = Boolean(
+    viewerSchool && profile.school && viewerSchool !== profile.school
+  )
   const posts = await getUserPosts(profile.id, session?.user?.id ?? null)
   const wallPosts = await getWallPosts(profile.id)
 
@@ -131,7 +148,11 @@ export default async function ProfilePage({
                   targetUserId={profile.id}
                   initialFollowing={following}
                 />
-                <PokeButton targetUserId={profile.id} />
+                {canTaunt ? (
+                  <TauntButton targetUserId={profile.id} />
+                ) : (
+                  <PokeButton targetUserId={profile.id} />
+                )}
               </div>
             </div>
           </Panel>
