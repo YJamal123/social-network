@@ -78,6 +78,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS interests TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS courses TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar BYTEA;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS school TEXT;
 `
 
 export async function POST(request: Request) {

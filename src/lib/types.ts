@@ -7,6 +7,7 @@ export interface User {
   relationship_status: string | null
   interests: string | null
   courses: string | null
+  school: string | null
   created_at: string
 }
 
@@ -86,6 +87,7 @@ export interface DirectoryRow {
   id: string
   username: string
   bio: string | null
+  school: string | null
   followed_by_me: boolean
 }
 
@@ -97,6 +99,7 @@ export interface ProfileUser {
   relationship_status: string | null
   interests: string | null
   courses: string | null
+  school: string | null
   created_at: string
   post_count: number
   follower_count: number
