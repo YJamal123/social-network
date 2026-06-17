@@ -119,6 +119,86 @@ const USERS: DemoUser[] = [
     interestedIn: "Women",
     lookingFor: "Random play",
   },
+  {
+    username: "rower_chad",
+    bio: "Heavyweight crew, 5am erg sessions, econ on the side.",
+    school: "Penn",
+    relationshipStatus: "Single",
+    interests: "Rowing, ergs, brunch recovery",
+    courses: "Intro Econ, Accounting, Statistics",
+    interestedIn: "Women",
+    lookingFor: "Friendship",
+  },
+  {
+    username: "ivy_isabel",
+    bio: "Woodrow Wilson School. Debate team captain. Future senator (allegedly).",
+    school: "Princeton",
+    relationshipStatus: "It's complicated",
+    interests: "Policy debate, model UN, op-eds",
+    courses: "Politics 101, Microeconomics, Constitutional Law",
+    interestedIn: "Men",
+    lookingFor: "A relationship",
+  },
+  {
+    username: "photog_nate",
+    bio: "Photo editor at the Spectator. I shoot the city at 3am.",
+    school: "Columbia",
+    relationshipStatus: "Single",
+    interests: "Film photography, darkrooms, vinyl",
+    courses: "Photojournalism, Media Studies, Art History",
+    interestedIn: "Women",
+    lookingFor: "Dating, Whatever I can get",
+  },
+  {
+    username: "a_capella_amy",
+    bio: "Whiffenpoofs reject, still singing anyway. Catch me on Old Campus.",
+    school: "Yale",
+    relationshipStatus: "In a relationship",
+    interests: "A cappella, sheet music, open mics",
+    courses: "Music Theory, Vocal Performance, Psych 101",
+    interestedIn: "Men, Women",
+    lookingFor: "A relationship",
+  },
+  {
+    username: "frat_brett",
+    bio: "House social chair. The basement is open. Pong, anyone?",
+    school: "Dartmouth",
+    relationshipStatus: "Single",
+    interests: "Pong, tailgates, ski trips",
+    courses: "Government, Econ, Earth Sciences",
+    interestedIn: "Women",
+    lookingFor: "Random play, Whatever I can get",
+  },
+  {
+    username: "thesis_tariq",
+    bio: "Open curriculum means I take whatever I want. Currently: everything.",
+    school: "Brown",
+    relationshipStatus: "It's complicated",
+    interests: "Philosophy, ultimate frisbee, espresso",
+    courses: "Philosophy of Mind, CS15, Linguistics",
+    interestedIn: "Men, Women",
+    lookingFor: "Friendship, Dating",
+  },
+  {
+    username: "premed_paula",
+    bio: "Bio concentrator. If you see me outside the science center, something is wrong.",
+    school: "Harvard",
+    relationshipStatus: "Single",
+    interests: "MCAT prep, hospital volunteering, yoga",
+    courses: "Genetics, Orgo II, Biochemistry",
+    interestedIn: "Men",
+    lookingFor: "A relationship",
+  },
+  {
+    username: "quad_quinn",
+    bio: "Hotel school. I will judge your room-service order. Ithaca is gorges.",
+    school: "Cornell",
+    relationshipStatus: "Single",
+    interests: "Hospitality, latte art, hiking the gorges",
+    courses: "Hospitality Management, Marketing, Wines",
+    interestedIn: "Men, Women",
+    lookingFor: "Dating",
+  },
 ]
 
 // Posts keyed by author index. Kept under 280 chars, 2004 status-update vibe.
@@ -182,6 +262,62 @@ const POSTS: Record<number, string[]> = {
     "Anyone got a spare ethernet cable? For science.",
     "Speedran the problem set so I could speedrun a game instead.",
   ],
+  9: [
+    "5am erg test. My soul left my body at meter 1500.",
+    "Crew won the sprints. Brunch is on the coxswain.",
+    "If you row, you know. If you don't, why are you awake?",
+    "Carbo-loading is just a personality at this point.",
+    "Coach says 'one more piece.' Coach lies.",
+  ],
+  10: [
+    "Won the debate round on a technicality. A win is a win.",
+    "Model UN this weekend — I am once again France.",
+    "Wrote an op-ed nobody asked for. You're welcome, campus.",
+    "Constitutional Law reading is 200 pages. I have read 12.",
+    "Future senator, current sleep-deprived. Vote for naps.",
+  ],
+  11: [
+    "Shot the skyline at 3am. The city never sleeps and neither do I.",
+    "Darkroom smells like victory and chemicals.",
+    "Spectator deadline in 2 hours, 400 photos to cull. Send help.",
+    "Found a roll of film I forgot to develop. It's like time travel.",
+    "Golden hour on the steps of Low Library. No filter needed.",
+  ],
+  12: [
+    "Whiffenpoofs said no. Old Campus said yes. Singing tonight!",
+    "Lost my voice at the open mic. Worth every note.",
+    "Learning a new arrangement. My suitemates are thrilled (they are not).",
+    "Sheet music everywhere. My desk is a hazard.",
+    "Spring jam concert next week — come for the harmonies, stay for the snacks.",
+  ],
+  13: [
+    "Basement is OPEN. Pong table reset. Come through.",
+    "Tailgate was historic. Details are classified.",
+    "Ski trip this weekend, sign the list on the house door.",
+    "Social chair duties: 10% planning, 90% damage control.",
+    "Lost three rounds of pong to a freshman. Rebuilding.",
+  ],
+  14: [
+    "Open curriculum is a gift and a curse. Took 6 classes for fun.",
+    "Frisbee on the green, philosophy in my head, espresso in my veins.",
+    "Read Descartes, now I doubt my own homework exists.",
+    "Brown has no requirements and somehow I'm more confused than ever.",
+    "CS15 project compiled on the first try. I am questioning reality.",
+  ],
+  15: [
+    "Genetics midterm survived. Barely. Send Punnett squares.",
+    "Volunteered at the hospital — humbling and amazing.",
+    "MCAT countdown: too many days, not enough flashcards.",
+    "Yoga at 6am to balance out the existential dread. It's working?",
+    "Saw daylight today. Science center, release me.",
+  ],
+  16: [
+    "Hotel school taught me to fold a napkin 6 ways. Use #4 is unclear.",
+    "Latte art update: it looks like a cloud, possibly a ghost.",
+    "Hiked the gorges. Ithaca really is gorges, I'm sorry.",
+    "Room-service order of the week: nachos at 2am. Bold. Respect.",
+    "Wines 101 is a real class and yes it is my favorite.",
+  ],
 }
 
 // Follow graph as [followerIdx, followingIdx] pairs. Intentionally asymmetric.
@@ -195,6 +331,17 @@ const FOLLOWS: [number, number][] = [
   [6, 4], [6, 0], [6, 3],
   [7, 1], [7, 5], [7, 8],
   [8, 0], [8, 2], [8, 4], [8, 6],
+  // — enrichment: wire new users (9–16) into the graph, asymmetrically —
+  [9, 6], [9, 0], [9, 16],
+  [10, 2], [10, 7], [10, 1],
+  [11, 5], [11, 2], [11, 0],
+  [12, 5], [12, 1], [12, 15],
+  [13, 8], [13, 4], [13, 0],
+  [14, 4], [14, 7], [14, 0],
+  [15, 1], [15, 12],
+  [16, 3], [16, 0], [16, 2],
+  // old users following back new ones
+  [0, 9], [0, 11], [1, 15], [2, 10], [3, 16], [5, 12], [8, 13],
 ]
 
 // Likes as [userIdx, authorIdx, postIdxWithinAuthor]. PK (user_id, post_id)
@@ -210,6 +357,14 @@ const LIKES: [number, number, number][] = [
   [0, 6, 1], [3, 6, 1], [4, 6, 1],
   [1, 7, 0], [5, 7, 0], [8, 7, 3],
   [0, 8, 0], [2, 8, 0], [4, 8, 1], [6, 8, 0],
+  // — enrichment: new users liking old posts —
+  [9, 0, 0], [10, 0, 3], [11, 1, 0], [12, 5, 2], [13, 8, 0], [14, 4, 1], [15, 1, 3], [16, 2, 0],
+  // new users liking new users
+  [9, 16, 0], [10, 11, 1], [11, 10, 2], [12, 9, 1], [13, 14, 3], [14, 13, 0], [15, 12, 4], [16, 15, 1],
+  // old users liking new posts
+  [0, 9, 1], [1, 15, 0], [2, 13, 0], [3, 16, 2], [4, 14, 1], [5, 12, 0], [6, 9, 0], [7, 11, 3], [8, 13, 1],
+  // a few extra cross-likes
+  [10, 12, 4], [11, 16, 2], [14, 10, 0], [15, 16, 3], [9, 14, 1],
 ]
 
 // Comments as [authorIdx, postAuthorIdx, postIdxWithinAuthor, content].
@@ -240,6 +395,29 @@ const COMMENTS: [number, number, number, string][] = [
   [0, 8, 0, "Bringing my controller AND snacks."],
   [2, 8, 1, "Freshmen are built different now."],
   [6, 8, 4, "Productivity hack of the year."],
+  // — enrichment: comments on the new users' posts (and a few new users commenting) —
+  [10, 9, 0, "This is why I do a sport that doesn't start at 5am."],
+  [0, 9, 1, "Coxswain brunch is the only brunch."],
+  [15, 9, 3, "Carbo-loading is the one thing premeds and rowers agree on."],
+  [11, 10, 2, "As a fellow op-ed writer: the campus is not ready."],
+  [2, 10, 1, "France again? Bold diplomatic choice."],
+  [13, 11, 0, "3am skyline shots > 3am pong, respectfully."],
+  [12, 11, 4, "Save me a print of the Low Library one!"],
+  [16, 12, 0, "Old Campus acoustics are unmatched, go off."],
+  [5, 12, 4, "Adding spring jam to my calendar in pen."],
+  [14, 13, 2, "A ski trip AND a reading list? Brown could never schedule that."],
+  [8, 13, 0, "Reset that pong table, I'm bringing the freshman who beat you."],
+  [9, 14, 1, "Frisbee on the green is basically rowing for people who like fun."],
+  [10, 14, 2, "Doubting your homework exists is a valid Brown strategy."],
+  [1, 15, 0, "Punnett squares incoming, you've got this."],
+  [6, 15, 3, "6am yoga? Respect. I do 6am sprints, we are the same."],
+  [3, 16, 2, "Ithaca IS gorges and I will not apologize either."],
+  [12, 16, 1, "The ghost latte is a feature, frame it."],
+  [7, 16, 4, "Wines 101 is the most Cornell class imaginable."],
+  [16, 3, 0, "LED matrix at the hotel school front desk? Make it happen."],
+  [15, 1, 0, "Orgo solidarity. We suffer together."],
+  [11, 2, 2, "Bring the DJ-cam to the gallery opening too."],
+  [14, 7, 1, "0 words, immaculate vibes — the Brown way."],
 ]
 
 // Wall posts as [ownerIdx, authorIdx, content]. Author always differs from owner
@@ -260,6 +438,19 @@ const WALL_POSTS: [number, number, string][] = [
   [6, 4, "Signed up for intramural soccer. Don't make me regret it."],
   [7, 5, "Lending you my favorite novel — guard it with your life."],
   [8, 0, "Ethernet cable delivered to your door. For science."],
+  // — enrichment: walls wiring new users in (author always differs from owner) —
+  [9, 6, "Welcome to the intramural circuit, rower. Soccer next?"],
+  [10, 2, "Your op-ed was unhinged in the best way. DJ set dedicated to you Friday."],
+  [11, 5, "Loved your skyline series — let's collab on the gallery show."],
+  [12, 1, "Coffee before your spring jam? My treat, you'll need it."],
+  [13, 8, "Bringing the LAN crew to your basement. Halo AND pong."],
+  [14, 0, "Open curriculum guy, you'd love building things. Add me on thefacebook."],
+  [15, 1, "Orgo study group, my room, snacks provided. You in?"],
+  [16, 3, "Hotel school latte for the EE genius who fixed the printer."],
+  [0, 9, "Saw you erging at 5am from my dorm window. Inspiring and terrifying."],
+  [5, 12, "Your harmony on Old Campus stopped me mid-walk. Encore!"],
+  [2, 11, "Need a photographer for Friday's set. You're hired (in exposure)."],
+  [4, 14, "Frisbee on the green Saturday? Bring the espresso."],
 ]
 
 // Pokes as [pokerIdx, pokeeIdx, acknowledged]. PK (poker_id, pokee_id) — each
@@ -275,6 +466,13 @@ const POKES: [number, number, boolean][] = [
   [0, 3, false],
   [6, 4, true],
   [7, 5, false],
+  // — enrichment: a couple aimed unacknowledged at user 0 so the badge keeps showing —
+  [9, 0, false],
+  [16, 0, false],
+  [10, 11, true],
+  [12, 15, false],
+  [13, 14, true],
+  [15, 1, false],
 ]
 
 // Taunts as [taunterIdx, taunteeIdx, acknowledged]. Mirror pokes but every pair
@@ -303,6 +501,20 @@ const TAUNTS: [number, number, boolean][] = [
   [2, 1, true], //  Princeton -> Harvard
   [7, 3, false], // Columbia -> Cornell
   [4, 3, true], //  Brown -> Cornell
+  // — enrichment: new users (9 Penn, 10 Princeton, 11 Columbia, 12 Yale,
+  //   13 Dartmouth, 14 Brown, 15 Harvard, 16 Cornell) — all cross-school —
+  [9, 1, false], //  Penn -> Harvard
+  [9, 16, true], //  Penn -> Cornell
+  [10, 4, false], // Princeton -> Brown
+  [11, 8, true], //  Columbia -> Dartmouth
+  [12, 9, false], // Yale -> Penn
+  [13, 15, true], // Dartmouth -> Harvard
+  [14, 2, false], // Brown -> Princeton
+  [15, 16, true], // Harvard -> Cornell  (Cornell-vs-Harvard scoreboard)
+  [16, 15, false], // Cornell -> Harvard  (scoreboard, unacknowledged -> badge)
+  [15, 0, true], //  Harvard -> Cornell  (scoreboard)
+  [16, 1, false], // Cornell -> Harvard  (scoreboard)
+  [10, 16, true], // Princeton -> Cornell
 ]
 
 // Relationships as [requesterIdx, addresseeIdx, status, confirmed]. PK is the
@@ -313,6 +525,11 @@ const RELATIONSHIPS: [number, number, string, boolean][] = [
   [2, 7, "It's complicated", true], // djmarcus <-> bookish_mei (confirmed)
   [3, 6, "In a relationship", true], // priya_codes <-> coachrandy (confirmed)
   [4, 0, "In a relationship", false], // skater_dave -> thefacebook_tom (pending)
+  // — enrichment: two more confirmed links + one pending; partners not already
+  //   confirmed-linked elsewhere —
+  [15, 9, "In a relationship", true], // premed_paula <-> rower_chad (confirmed)
+  [12, 16, "In a relationship", true], // a_capella_amy <-> quad_quinn (confirmed)
+  [10, 14, "It's complicated", false], // ivy_isabel -> thesis_tariq (pending)
 ]
 
 // Messages as [senderIdx, recipientIdx, content, read]. Private 1:1 DMs. A few
@@ -330,6 +547,43 @@ const MESSAGES: [number, number, string, boolean][] = [
   [7, 5, "You're the best. I'll bring the ramen as payment.", false],
   [8, 2, "Need that Halo theme remix for the LAN party. Can you cook one up?", true],
   [2, 8, "Already on it. It's going to slap.", false],
+  // — enrichment: richer multi-message threads; newest inbound to user 0 left
+  //   unread so the inbox badge stays prominent —
+  // Thread A: rower_chad (9) <-> user 0 (unread to user 0)
+  [9, 0, "Tom — heard you built the directory solo. As a rower I respect the 5am grind.", false],
+  [0, 9, "Ha, the directory was its own kind of erg test. Mostly downhill though.", true],
+  [9, 0, "Come watch the sprints Saturday, I'll get you on the dock.", false],
+  // Thread B: ivy_isabel (10) <-> djmarcus (2)
+  [10, 2, "Marcus, need a set for the debate after-party. Something victorious.", true],
+  [2, 10, "Say less. I've got a whole 'I won on a technicality' anthem queued.", true],
+  [10, 2, "Perfect. Loser buys the pizza, and it won't be me.", true],
+  // Thread C: photog_nate (11) <-> artsy_lena (5)
+  [11, 5, "Lena — your charcoal + my photos = joint show. Thoughts?", true],
+  [5, 11, "YES. I'll trade you three portraits for darkroom access.", true],
+  [11, 5, "Deal. Bring ramen, obviously.", false],
+  // Thread D: a_capella_amy (12) <-> premed_paula (15)
+  [12, 15, "Paula! Spring jam is next week, you HAVE to come.", true],
+  [15, 12, "If I survive the genetics midterm, I'm there. Front row.", true],
+  [12, 15, "I'll dedicate a song to your Punnett squares.", false],
+  // Thread E: frat_brett (13) <-> gamer_greg (8)
+  [13, 8, "Greg, bring the LAN crew to the basement. Halo upstairs, pong downstairs.", true],
+  [8, 13, "Best sentence I've read all semester. We're in.", true],
+  [13, 8, "Loser of pong has to run the ethernet cables.", true],
+  // Thread F: quad_quinn (16) <-> user 0 (unread to user 0)
+  [16, 0, "Tom, hotel school wants a directory for the front desk. Can I pick your brain?", false],
+  [0, 16, "For a free latte? Absolutely. Swing by the lab.", true],
+  [16, 0, "Two lattes. I'm generous. See you tomorrow.", false],
+  // Thread G: thesis_tariq (14) <-> bookish_mei (7)
+  [14, 7, "Mei — read any good Victorian novels lately? Asking for a philosophy crisis.", true],
+  [7, 14, "Always. I'll lend you one if you promise not to annotate in pen.", true],
+  [14, 7, "...I make no promises.", true],
+  // Thread H: harvardhannah (1) <-> premed_paula (15)
+  [1, 15, "Paula, orgo study room on the 4th floor. Don't tell anyone.", true],
+  [15, 1, "My lips are sealed. Bringing the good cookies.", false],
+  // A few extra one-offs to fill the inbox
+  [6, 9, "Welcome to intramurals, rower. 6am soccer when crew's done?", true],
+  [10, 11, "Need headshots for the Wilson School site. You free?", false],
+  [3, 16, "Hotel school latte in exchange for printer repair? Deal of the century.", true],
 ]
 
 export async function POST(request: Request) {
