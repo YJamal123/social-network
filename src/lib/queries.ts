@@ -36,6 +36,19 @@ export async function fetchPosts(opts: {
 }
 
 /**
+ * The signed-in viewer's school (raw text from `users.school`, may be NULL).
+ * Used by the feed to pick the campus banner. Returns `null` if the user row
+ * is missing or has no school set. Server-only (imports the pg `query()`).
+ */
+export async function fetchUserSchool(userId: string): Promise<string | null> {
+  const result = await query<{ school: string | null }>(
+    "SELECT school FROM users WHERE id = $1",
+    [userId]
+  )
+  return result.rows[0]?.school ?? null
+}
+
+/**
  * Newest members first — used by the dashboard Directory accordion preview.
  * Server-only (imports the pg `query()`). Raw SQL, no ORM.
  */

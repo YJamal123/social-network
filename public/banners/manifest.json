@@ -1,0 +1,66 @@
+[
+  {
+    "school": "Brown",
+    "slug": "brown",
+    "file": "brown.jpg",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:University_Hall_(Brown_University).JPG",
+    "credit": "Wikimedia Commons — University Hall, Brown University (CC)"
+  },
+  {
+    "school": "Columbia",
+    "slug": "columbia",
+    "file": "columbia.jpg",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Low_Memorial_Library_Columbia_University_NYC.jpg",
+    "credit": "Wikimedia Commons — Low Memorial Library, Columbia University (CC)"
+  },
+  {
+    "school": "Cornell",
+    "slug": "cornell",
+    "file": "cornell.jpg",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Cornell_University,_Ho_Plaza_and_Sage_Hall.jpg",
+    "credit": "Wikimedia Commons — Ho Plaza and Sage Hall, Cornell University (CC)"
+  },
+  {
+    "school": "Dartmouth",
+    "slug": "dartmouth",
+    "file": "dartmouth.jpg",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Baker_Tower_Panorama_(10292276743).jpg",
+    "credit": "Wikimedia Commons — Baker Tower / The Green panorama, Dartmouth College (CC)"
+  },
+  {
+    "school": "Harvard",
+    "slug": "harvard",
+    "file": "harvard.jpg",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Harvard_yard_winter_2009j.JPG",
+    "credit": "Wikimedia Commons — Harvard Yard, Harvard University (CC)"
+  },
+  {
+    "school": "Penn",
+    "slug": "penn",
+    "file": "penn.jpg",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:College_Hall,_University_of_Pennsylvania.jpg",
+    "credit": "Wikimedia Commons — College Hall, University of Pennsylvania (CC)"
+  },
+  {
+    "school": "Princeton",
+    "slug": "princeton",
+    "file": "princeton.jpg",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Nassau_Hall_Princeton_Uni.JPG",
+    "credit": "Wikimedia Commons — Nassau Hall, Princeton University (CC)"
+  },
+  {
+    "school": "Yale",
+    "slug": "yale",
+    "file": "yale.jpg",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Yale_University_Old_Campus.JPG",
+    "credit": "Wikimedia Commons — Old Campus, Yale University (CC)"
+  }
+]

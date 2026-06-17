@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { fetchPosts, fetchRecentUsers } from "@/lib/queries"
+import { fetchPosts, fetchRecentUsers, fetchUserSchool } from "@/lib/queries"
+import { isValidSchool, SCHOOL_META, type School } from "@/lib/schools"
 import { auth } from "@/lib/auth"
 import { getUnacknowledgedPokeCount } from "@/app/(main)/pokes/actions"
 import { PostForm } from "@/components/PostForm"
@@ -34,17 +35,22 @@ export default async function FeedPage() {
   const session = await auth()
   const username = session?.user?.name
   const userId = session?.user?.id
-  const [posts, recentUsers, pokeCount] = userId
+  const [posts, recentUsers, pokeCount, rawSchool] = userId
     ? await Promise.all([
         getPosts(userId),
         fetchRecentUsers(3),
         getUnacknowledgedPokeCount(),
+        fetchUserSchool(userId),
       ])
-    : [[], [], 0]
+    : [[], [], 0, null]
+
+  // Pick the viewer's campus banner. Fall back to Cornell for legacy rows or an
+  // unrecognized value so the banner always renders.
+  const school: School = isValidSchool(rawSchool) ? rawSchool : "Cornell"
 
   return (
     <>
-      <SchoolBanner />
+      <SchoolBanner school={school} />
       <main className="mx-auto grid max-w-container-max grid-cols-1 gap-gutter-wide px-gutter py-stack-lg md:grid-cols-12">
         <aside className="flex flex-col gap-stack-lg md:col-span-4 lg:col-span-3">
           <Panel title="Quick Search">
@@ -79,7 +85,7 @@ export default async function FeedPage() {
                         {username}
                       </Link>
                       <p className="text-body-sm text-on-surface-variant">
-                        Cornell University
+                        {SCHOOL_META[school].name}
                       </p>
                     </div>
                   </div>

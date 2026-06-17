@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { SCHOOLS, isValidSchool } from "@/lib/schools"
+import { SCHOOLS, isValidSchool, SCHOOL_META } from "@/lib/schools"
 
 describe("SCHOOLS", () => {
   it("is the eight Ivy League schools in alphabetical order", () => {
@@ -39,5 +39,30 @@ describe("isValidSchool", () => {
     expect(isValidSchool(null)).toBe(false)
     expect(isValidSchool(undefined)).toBe(false)
     expect(isValidSchool(123)).toBe(false)
+  })
+})
+
+describe("SCHOOL_META", () => {
+  it("has an entry for every whitelisted school", () => {
+    for (const school of SCHOOLS) {
+      expect(SCHOOL_META[school]).toBeDefined()
+    }
+  })
+
+  it("has exactly the eight school keys (no extras, no missing)", () => {
+    expect(Object.keys(SCHOOL_META).sort()).toEqual([...SCHOOLS].sort())
+  })
+
+  it("points every banner at a static /banners/ path", () => {
+    for (const school of SCHOOLS) {
+      expect(SCHOOL_META[school].banner).toMatch(/^\/banners\/[a-z]+\.jpg$/)
+    }
+  })
+
+  it("gives every school a non-empty wordmark and tagline", () => {
+    for (const school of SCHOOLS) {
+      expect(SCHOOL_META[school].name.length).toBeGreaterThan(0)
+      expect(SCHOOL_META[school].tagline.length).toBeGreaterThan(0)
+    }
   })
 })
