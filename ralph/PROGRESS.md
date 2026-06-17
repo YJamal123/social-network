@@ -8,7 +8,7 @@ COMPLETE` the exact first line of this file and commit.
 ## Feature 1 — School field + Ivy League picker
 - [x] 1. `src/lib/schools.ts`: `SCHOOLS` (Brown, Columbia, Cornell, Dartmouth, Harvard, Penn, Princeton, Yale) + `isValidSchool()`; add `src/lib/schools.test.ts`. Migrate: `ALTER TABLE users ADD COLUMN IF NOT EXISTS school TEXT`. Add `school: string | null` to `User`, `ProfileUser`, `DirectoryRow` in types.ts.
 - [x] 2. Register: `<select name="school">` in `register/page.tsx`; in `register/actions.ts` require + validate against `SCHOOLS`, add to the INSERT.
-- [ ] 3. Edit/display: `updateProfile` validates + persists `school`; `<select>` in `ProfileEditForm.tsx` (thread `initialSchool` from the edit page); add `school` to `getProfile` SELECT + an InfoRow on the profile; add `school` to `getUsers` SELECT + a tag in the directory `UserRow` subtitle.
+- [x] 3. Edit/display: `updateProfile` validates + persists `school`; `<select>` in `ProfileEditForm.tsx` (thread `initialSchool` from the edit page); add `school` to `getProfile` SELECT + an InfoRow on the profile; add `school` to `getUsers` SELECT + a tag in the directory `UserRow` subtitle.
 
 ## Feature 2 — Taunt (cross-school Poke variant)
 - [ ] 4. Migrate: `taunts` table (mirror `pokes`: taunter_id, tauntee_id, created_at, acknowledged, PK pair) + `taunts_tauntee_id_idx`. Types `Taunt`, `TauntWithTaunter` (taunter_username, taunter_school).

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { updateProfile } from "@/app/(main)/profile/actions"
 import { Panel } from "@/components/Panel"
 import { fieldClass } from "@/lib/ui"
+import { SCHOOLS } from "@/lib/schools"
 
 const MAX_BIO = 280
 const MAX_RELATIONSHIP = 50
@@ -19,12 +20,14 @@ export function ProfileEditForm({
   initialRelationshipStatus,
   initialInterests,
   initialCourses,
+  initialSchool,
 }: {
   username: string
   initialBio: string
   initialRelationshipStatus: string
   initialInterests: string
   initialCourses: string
+  initialSchool: string
 }) {
   const [state, formAction] = useFormState(updateProfile, {})
 
@@ -47,6 +50,25 @@ export function ProfileEditForm({
             placeholder="Tell people about yourself"
             className={`${fieldClass} mt-1 resize-none`}
           />
+        </label>
+
+        <label className={labelClass}>
+          School
+          <select
+            name="school"
+            defaultValue={initialSchool}
+            required
+            className={`${fieldClass} mt-1`}
+          >
+            <option value="" disabled>
+              Select your school
+            </option>
+            {SCHOOLS.map((school) => (
+              <option key={school} value={school}>
+                {school}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className={labelClass}>

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { validatePostContent } from "@/lib/validation"
+import { isValidSchool } from "@/lib/schools"
 import type { WallPostWithAuthor } from "@/lib/types"
 
 export type ProfileState = { error?: string }
@@ -49,19 +50,26 @@ export async function updateProfile(
     return { error: `Courses must be ${MAX_COURSES} characters or fewer` }
   }
 
+  const school = ((formData.get("school") as string) ?? "").trim()
+  if (!isValidSchool(school)) {
+    return { error: "Please select a valid school" }
+  }
+
   try {
     await query(
       `UPDATE users
           SET bio = $1,
               relationship_status = $2,
               interests = $3,
-              courses = $4
-        WHERE id = $5`,
+              courses = $4,
+              school = $5
+        WHERE id = $6`,
       [
         bio || null,
         relationshipStatus || null,
         interests || null,
         courses || null,
+        school,
         session.user.id,
       ]
     )

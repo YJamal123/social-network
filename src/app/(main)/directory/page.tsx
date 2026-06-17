@@ -14,7 +14,7 @@ async function getUsers(
 ): Promise<DirectoryRow[]> {
   const like = `%${q}%`
   const result = await query<DirectoryRow>(
-    `SELECT u.id, u.username, u.bio,
+    `SELECT u.id, u.username, u.bio, u.school,
             EXISTS (
               SELECT 1 FROM follows f
                WHERE f.follower_id = $1 AND f.following_id = u.id
@@ -80,11 +80,20 @@ export default async function DirectoryPage({
                     userId={u.id}
                     username={u.username}
                     subtitle={
-                      u.bio ? (
-                        <span className="text-on-surface-variant">{u.bio}</span>
-                      ) : (
-                        <span className="italic text-outline">No bio yet.</span>
-                      )
+                      <span className="flex items-center gap-1.5">
+                        {u.school && (
+                          <span className="shrink-0 rounded bg-surface-container px-1.5 py-0.5 text-caption text-secondary">
+                            {u.school}
+                          </span>
+                        )}
+                        {u.bio ? (
+                          <span className="truncate text-on-surface-variant">
+                            {u.bio}
+                          </span>
+                        ) : (
+                          <span className="italic text-outline">No bio yet.</span>
+                        )}
+                      </span>
                     }
                     action={
                       viewerId && !isSelf ? (
