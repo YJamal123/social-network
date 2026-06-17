@@ -12,7 +12,7 @@ COMPLETE` the exact first line of this file and commit.
 
 ## Feature 2 — Taunt (cross-school Poke variant)
 - [x] 4. Migrate: `taunts` table (mirror `pokes`: taunter_id, tauntee_id, created_at, acknowledged, PK pair) + `taunts_tauntee_id_idx`. Types `Taunt`, `TauntWithTaunter` (taunter_username, taunter_school).
-- [ ] 5. `src/app/(main)/taunts/actions.ts` (fork `pokes/actions.ts`): `taunt(targetId)` with auth guard, self no-op, AND same-school guard (reject if same school or either null); `getUnacknowledgedTauntCount`, `tauntBack`, `acknowledgeTaunts`, `getTaunters`.
+- [x] 5. `src/app/(main)/taunts/actions.ts` (fork `pokes/actions.ts`): `taunt(targetId)` with auth guard, self no-op, AND same-school guard (reject if same school or either null); `getUnacknowledgedTauntCount`, `tauntBack`, `acknowledgeTaunts`, `getTaunters`.
 - [ ] 6. `TauntButton.tsx` (fork PokeButton, label "Taunt!") + `TauntBackButton.tsx` + `TauntsAck.tsx`. On `profile/[username]/page.tsx` Connection panel: render `TauntButton` when viewer.school ≠ profile.school else `PokeButton` (thread both schools from the page).
 - [ ] 7. `/taunts/page.tsx` (fork `/pokes/page.tsx`) with `tauntBack`; add a "taunts" nav link + coral count badge in `SiteHeader.tsx` (reuse poke-badge markup, `getUnacknowledgedTauntCount`).
 
