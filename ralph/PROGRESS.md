@@ -1,3 +1,5 @@
+RALPH COMPLETE
+
 # Next-Features Progress — schools, Taunt, scoreboard, relationships, profile fields
 
 Derived from `.claude/NEXT-FEATURES.md`. Each iteration: do the FIRST unchecked
@@ -30,4 +32,4 @@ COMPLETE` the exact first line of this file and commit.
 
 ## Seed + wrap-up
 - [x] 14. Extend `src/app/api/seed/route.ts`: give demo users varied Ivy `school` values, a few cross-school `taunts` (some unacknowledged), one or two confirmed `relationships`, and `interested_in`/`looking_for` values. Keep in the existing idempotent transaction; add the new counts to the returned JSON.
-- [ ] 15. Final pass: `npx tsc --noEmit` + `npm run build` + `npm test` all clean; self-review against NEXT-FEATURES.md + CLAUDE.md guardrails (raw pg, {error?}, no any, Tailwind only, self-guards, edge boundary); then mark complete.
+- [x] 15. Final pass: `npx tsc --noEmit` + `npm run build` + `npm test` all clean; self-review against NEXT-FEATURES.md + CLAUDE.md guardrails (raw pg, {error?}, no any, Tailwind only, self-guards, edge boundary); then mark complete.
