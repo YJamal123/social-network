@@ -17,58 +17,99 @@ const DEMO_PASSWORD = "demo1234"
 interface DemoUser {
   username: string
   bio: string
+  school: string
   relationshipStatus?: string
   interests?: string
   courses?: string
+  interestedIn?: string
+  lookingFor?: string
 }
 
-// ~9 users with characterful early-Facebook-era bios + profile fields.
+// ~9 users with characterful early-Facebook-era bios + profile fields. Schools
+// span all eight Ivies (and are intentionally varied) so the cross-school Taunt
+// guard and the Cornell-vs-Harvard head-to-head scoreboard have data to show.
 const USERS: DemoUser[] = [
   {
     username: "thefacebook_tom",
     bio: "CS junior. Building things in my dorm. Poke me.",
+    school: "Cornell",
     relationshipStatus: "Single",
     interests: "Coding, late-night pizza, growth hacking",
     courses: "CS161, CS50, Linear Algebra",
+    interestedIn: "Women",
+    lookingFor: "Friendship, Whatever I can get",
   },
   {
     username: "harvardhannah",
     bio: "Pre-med, perpetually in Lamont Library. Coffee is a food group.",
+    school: "Harvard",
     relationshipStatus: "In a relationship",
     interests: "Organic chemistry, running, true-crime podcasts",
     courses: "Orgo II, Biostatistics, Cell Biology",
+    interestedIn: "Men, Women",
+    lookingFor: "A relationship",
   },
   {
     username: "djmarcus",
     bio: "Spinning records at the eating club this Friday. RSVP or regret it.",
+    school: "Princeton",
     relationshipStatus: "It's complicated",
     interests: "Vinyl, mixtapes, throwing parties",
     courses: "Music Theory, Sociology 101",
+    interestedIn: "Women",
+    lookingFor: "Dating, Random play",
   },
   {
     username: "priya_codes",
     bio: "EE/CS double major. Soldering > sleeping.",
+    school: "Cornell",
     relationshipStatus: "Single",
     interests: "Circuits, robotics, mechanical keyboards",
     courses: "Circuits, Signals & Systems, CS161",
+    interestedIn: "Men",
+    lookingFor: "Friendship",
   },
-  { username: "skater_dave", bio: "Econ major who would rather be at the skatepark." },
+  {
+    username: "skater_dave",
+    bio: "Econ major who would rather be at the skatepark.",
+    school: "Brown",
+    interestedIn: "Women",
+    lookingFor: "Whatever I can get",
+  },
   {
     username: "artsy_lena",
     bio: "Visual arts. I will draw you for ramen money.",
-    relationshipStatus: "Single",
+    school: "Yale",
+    relationshipStatus: "In a relationship",
     interests: "Charcoal portraits, gallery hopping, ramen",
     courses: "Studio Art, Art History, Intro Econ",
+    interestedIn: "Men, Women",
+    lookingFor: "A relationship, Dating",
   },
-  { username: "coachrandy", bio: "Intramural soccer captain. Practice is NOT optional." },
+  {
+    username: "coachrandy",
+    bio: "Intramural soccer captain. Practice is NOT optional.",
+    school: "Penn",
+    interestedIn: "Women",
+    lookingFor: "Friendship",
+  },
   {
     username: "bookish_mei",
     bio: "English lit. Currently 4 novels deep, 0 essays written.",
+    school: "Columbia",
     relationshipStatus: "It's complicated",
     interests: "Victorian novels, tea, procrastination",
     courses: "Modernist Lit, Creative Writing, Philosophy 101",
+    interestedIn: "Men",
+    lookingFor: "A relationship",
   },
-  { username: "gamer_greg", bio: "Halo LAN party in my common room. BYO controller." },
+  {
+    username: "gamer_greg",
+    bio: "Halo LAN party in my common room. BYO controller.",
+    school: "Dartmouth",
+    interestedIn: "Women",
+    lookingFor: "Random play",
+  },
 ]
 
 // Posts keyed by author index. Kept under 280 chars, 2004 status-update vibe.
@@ -227,6 +268,32 @@ const POKES: [number, number, boolean][] = [
   [7, 5, false],
 ]
 
+// Taunts as [taunterIdx, taunteeIdx, acknowledged]. Mirror pokes but every pair
+// is CROSS-SCHOOL (the taunt guard rejects same-school) — see USERS schools.
+// The Cornell (0,3) vs Harvard (1) exchanges feed the /taunts head-to-head
+// scoreboard; a few are left unacknowledged so the header badge shows.
+const TAUNTS: [number, number, boolean][] = [
+  [0, 1, false], // Cornell -> Harvard
+  [1, 0, false], // Harvard -> Cornell
+  [3, 1, true], // Cornell -> Harvard
+  [1, 3, false], // Harvard -> Cornell
+  [2, 0, true], // Princeton -> Cornell
+  [4, 5, false], // Brown -> Yale
+  [6, 7, true], // Penn -> Columbia
+  [8, 0, false], // Dartmouth -> Cornell
+  [5, 2, true], // Yale -> Princeton
+  [7, 1, false], // Columbia -> Harvard
+]
+
+// Relationships as [requesterIdx, addresseeIdx, status, confirmed]. PK is the
+// ordered pair. Two confirmed links demo "In a relationship with @partner"; one
+// pending proposal lights up the header indicator + /relationships requests.
+const RELATIONSHIPS: [number, number, string, boolean][] = [
+  [1, 5, "In a relationship", true], // harvardhannah <-> artsy_lena (confirmed)
+  [2, 7, "It's complicated", true], // djmarcus <-> bookish_mei (confirmed)
+  [4, 0, "In a relationship", false], // skater_dave -> thefacebook_tom (pending)
+]
+
 export async function POST(request: Request) {
   const token = new URL(request.url).searchParams.get("token")
   if (!process.env.NEXTAUTH_SECRET || token !== process.env.NEXTAUTH_SECRET) {
@@ -246,16 +313,19 @@ export async function POST(request: Request) {
     const userIds: string[] = []
     for (const u of USERS) {
       const res = await client.query<{ id: string }>(
-        `INSERT INTO users (username, email, password_hash, bio, relationship_status, interests, courses)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        `INSERT INTO users (username, email, password_hash, bio, school, relationship_status, interests, courses, interested_in, looking_for)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
         [
           u.username,
           `${u.username}@demo.sml`,
           passwordHash,
           u.bio,
+          u.school,
           u.relationshipStatus ?? null,
           u.interests ?? null,
           u.courses ?? null,
+          u.interestedIn ?? null,
+          u.lookingFor ?? null,
         ]
       )
       userIds.push(res.rows[0].id)
@@ -344,6 +414,30 @@ export async function POST(request: Request) {
       pokeCount++
     }
 
+    // Taunts (cross-school; some unacknowledged so the header indicator shows).
+    let tauntCount = 0
+    for (const [taunterIdx, taunteeIdx, acknowledged] of TAUNTS) {
+      await client.query(
+        `INSERT INTO taunts (taunter_id, tauntee_id, acknowledged) VALUES ($1, $2, $3)
+         ON CONFLICT (taunter_id, tauntee_id) DO UPDATE
+           SET created_at = now(), acknowledged = EXCLUDED.acknowledged`,
+        [userIds[taunterIdx], userIds[taunteeIdx], acknowledged]
+      )
+      tauntCount++
+    }
+
+    // Relationships (linked partners; a couple confirmed, one pending).
+    let relationshipCount = 0
+    for (const [requesterIdx, addresseeIdx, status, confirmed] of RELATIONSHIPS) {
+      await client.query(
+        `INSERT INTO relationships (requester_id, addressee_id, status, confirmed) VALUES ($1, $2, $3, $4)
+         ON CONFLICT (requester_id, addressee_id) DO UPDATE
+           SET status = EXCLUDED.status, confirmed = EXCLUDED.confirmed, created_at = now()`,
+        [userIds[requesterIdx], userIds[addresseeIdx], status, confirmed]
+      )
+      relationshipCount++
+    }
+
     await client.query("COMMIT")
 
     return NextResponse.json({
@@ -356,6 +450,8 @@ export async function POST(request: Request) {
         comments: commentCount,
         wallPosts: wallPostCount,
         pokes: pokeCount,
+        taunts: tauntCount,
+        relationships: relationshipCount,
       },
     })
   } catch (err) {
