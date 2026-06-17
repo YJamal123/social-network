@@ -48,3 +48,8 @@ next-env.d.ts
 
 # Ralph loop logs
 /ralph/logs/
+
+# Claude Code — keep shared agents/skills/docs, ignore local-only + transient
+.claude/settings.local.json
+.claude/.qa-last-run.log
+.claude/worktrees/
