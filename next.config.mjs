@@ -14,6 +14,16 @@ const nextConfig = {
       // Allow avatar image uploads (default Server Action body limit is 1MB).
       bodySizeLimit: "3mb",
     },
+    // Next's standalone output traces JS imports but can miss Prisma's native
+    // query-engine binary (a .node file) and its schema. Force them into the
+    // bundle so the Cloud Run container can run queries. (In Next 14.2 this key
+    // lives under `experimental`; it graduates to top-level in Next 15.)
+    outputFileTracingIncludes: {
+      "*": [
+        "./node_modules/.prisma/client/*.node",
+        "./node_modules/.prisma/client/schema.prisma",
+      ],
+    },
   },
 };
 

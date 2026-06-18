@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { auth } from "@/lib/auth"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import { FollowButton } from "@/components/FollowButton"
 import { DirectorySearch } from "@/components/DirectorySearch"
 import { Panel } from "@/components/Panel"
@@ -16,19 +16,19 @@ async function getUsers(
 ): Promise<DirectoryRow[]> {
   // $1 is the viewer id; the structured filters splice in from $2 onward.
   const { where, params } = buildUserSearch(filters, 2)
-  const result = await query<DirectoryRow>(
+  return getPrisma().$queryRawUnsafe<DirectoryRow[]>(
     `SELECT u.id, u.username, u.bio, u.school,
             EXISTS (
               SELECT 1 FROM follows f
-               WHERE f.follower_id = $1 AND f.following_id = u.id
+               WHERE f.follower_id = $1::uuid AND f.following_id = u.id
             ) AS followed_by_me
        FROM users u
       WHERE ${where}
       ORDER BY u.username ASC
       LIMIT 100`,
-    [viewerId, ...params]
+    viewerId,
+    ...params
   )
-  return result.rows
 }
 
 export default async function DirectoryPage({

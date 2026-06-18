@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import { validatePostContent } from "@/lib/validation"
 import { isValidSchool } from "@/lib/schools"
 import { isValidClassYear } from "@/lib/classYears"
@@ -84,29 +84,19 @@ export async function updateProfile(
   )
 
   try {
-    await query(
-      `UPDATE users
-          SET bio = $1,
-              relationship_status = $2,
-              interests = $3,
-              courses = $4,
-              school = $5,
-              interested_in = $6,
-              looking_for = $7,
-              class_year = $8
-        WHERE id = $9`,
-      [
-        bio || null,
-        relationshipStatus || null,
-        interests || null,
-        courses || null,
+    await getPrisma().user.update({
+      where: { id: session.user.id },
+      data: {
+        bio: bio || null,
+        relationshipStatus: relationshipStatus || null,
+        interests: interests || null,
+        courses: courses || null,
         school,
-        interestedIn || null,
-        lookingFor || null,
+        interestedIn: interestedIn || null,
+        lookingFor: lookingFor || null,
         classYear,
-        session.user.id,
-      ]
-    )
+      },
+    })
   } catch (err) {
     console.error("Update profile failed:", err)
     return { error: "Failed to update profile" }
@@ -135,20 +125,17 @@ export async function toggleFollow(targetUserId: string): Promise<FollowState> {
   }
 
   try {
-    const existing = await query(
-      "SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = $2",
-      [followerId, targetUserId]
-    )
-    if (existing.rowCount && existing.rowCount > 0) {
-      await query(
-        "DELETE FROM follows WHERE follower_id = $1 AND following_id = $2",
-        [followerId, targetUserId]
-      )
+    const prisma = getPrisma()
+    const where = {
+      followerId_followingId: { followerId, followingId: targetUserId },
+    }
+    const existing = await prisma.follow.findUnique({ where })
+    if (existing) {
+      await prisma.follow.delete({ where })
     } else {
-      await query(
-        "INSERT INTO follows (follower_id, following_id) VALUES ($1, $2)",
-        [followerId, targetUserId]
-      )
+      await prisma.follow.create({
+        data: { followerId, followingId: targetUserId },
+      })
     }
   } catch (err) {
     console.error("Toggle follow failed:", err)
@@ -187,18 +174,19 @@ export async function proposeRelationship(
   }
 
   try {
+    const prisma = getPrisma()
     // One outstanding proposal per requester — drop any prior unconfirmed ones.
-    await query(
-      "DELETE FROM relationships WHERE requester_id = $1 AND confirmed = false",
-      [requesterId]
-    )
-    await query(
-      `INSERT INTO relationships (requester_id, addressee_id, status, confirmed)
-       VALUES ($1, $2, $3, false)
-       ON CONFLICT (requester_id, addressee_id)
-       DO UPDATE SET status = EXCLUDED.status, confirmed = false, created_at = now()`,
-      [requesterId, addresseeId, status]
-    )
+    await prisma.relationship.deleteMany({
+      where: { requesterId, confirmed: false },
+    })
+    await prisma.relationship.upsert({
+      where: {
+        requesterId_addresseeId: { requesterId, addresseeId },
+      },
+      create: { requesterId, addresseeId, status, confirmed: false },
+      // Mirror ON CONFLICT DO UPDATE: reset status/confirmed and bump created_at.
+      update: { status, confirmed: false, createdAt: new Date() },
+    })
   } catch (err) {
     console.error("Propose relationship failed:", err)
     return { error: "Failed to propose relationship" }
@@ -232,11 +220,10 @@ export async function proposeRelationshipByUsername(
 
   let addresseeId: string
   try {
-    const result = await query<{ id: string }>(
-      "SELECT id FROM users WHERE username = $1",
-      [username]
-    )
-    const row = result.rows[0]
+    const row = await getPrisma().user.findUnique({
+      where: { username },
+      select: { id: true },
+    })
     if (!row) {
       return { error: "No user with that username" }
     }
@@ -267,10 +254,10 @@ export async function confirmRelationship(
   }
 
   try {
-    await query(
-      "UPDATE relationships SET confirmed = true WHERE requester_id = $1 AND addressee_id = $2",
-      [requesterId, meId]
-    )
+    await getPrisma().relationship.updateMany({
+      where: { requesterId, addresseeId: meId },
+      data: { confirmed: true },
+    })
   } catch (err) {
     console.error("Confirm relationship failed:", err)
     return { error: "Failed to confirm relationship" }
@@ -291,11 +278,9 @@ export async function getPendingRelationshipRequestCount(): Promise<number> {
   }
 
   try {
-    const result = await query<{ count: number }>(
-      "SELECT COUNT(*)::int AS count FROM relationships WHERE addressee_id = $1 AND confirmed = false",
-      [session.user.id]
-    )
-    return result.rows[0]?.count ?? 0
+    return await getPrisma().relationship.count({
+      where: { addresseeId: session.user.id, confirmed: false },
+    })
   } catch (err) {
     console.error("Count relationship requests failed:", err)
     return 0
@@ -313,16 +298,13 @@ export async function getPendingRelationshipRequests(): Promise<
     return []
   }
 
-  const result = await query<RelationshipWithPartner>(
-    `SELECT r.requester_id, r.addressee_id, r.status, r.confirmed, r.created_at,
-            u.username AS partner_username
-     FROM relationships r
-     JOIN users u ON u.id = r.requester_id
-     WHERE r.addressee_id = $1 AND r.confirmed = false
-     ORDER BY r.created_at DESC`,
-    [session.user.id]
-  )
-  return result.rows
+  return getPrisma().$queryRaw<RelationshipWithPartner[]>`
+    SELECT r.requester_id, r.addressee_id, r.status, r.confirmed, r.created_at,
+           u.username AS partner_username
+    FROM relationships r
+    JOIN users u ON u.id = r.requester_id
+    WHERE r.addressee_id = ${session.user.id}::uuid AND r.confirmed = false
+    ORDER BY r.created_at DESC`
 }
 
 export type WallState = { error?: string }
@@ -345,10 +327,9 @@ export async function postToWall(
   }
 
   try {
-    await query(
-      "INSERT INTO wall_posts (owner_id, author_id, content) VALUES ($1, $2, $3)",
-      [ownerId, session.user.id, result.value]
-    )
+    await getPrisma().wallPost.create({
+      data: { ownerId, authorId: session.user.id, content: result.value },
+    })
   } catch (err) {
     console.error("Post to wall failed:", err)
     return { error: "Failed to post to wall" }
@@ -363,16 +344,13 @@ export async function postToWall(
 export async function getWallPosts(
   ownerId: string
 ): Promise<WallPostWithAuthor[]> {
-  const result = await query<WallPostWithAuthor>(
-    `SELECT w.id, w.owner_id, w.author_id, w.content, w.created_at,
-            u.username AS author_username
-     FROM wall_posts w
-     JOIN users u ON u.id = w.author_id
-     WHERE w.owner_id = $1
-     ORDER BY w.created_at DESC`,
-    [ownerId]
-  )
-  return result.rows
+  return getPrisma().$queryRaw<WallPostWithAuthor[]>`
+    SELECT w.id, w.owner_id, w.author_id, w.content, w.created_at,
+           u.username AS author_username
+    FROM wall_posts w
+    JOIN users u ON u.id = w.author_id
+    WHERE w.owner_id = ${ownerId}::uuid
+    ORDER BY w.created_at DESC`
 }
 
 export type AvatarState = { error?: string }
@@ -410,11 +388,11 @@ export async function uploadAvatar(
   const bytes = Buffer.from(await file.arrayBuffer())
 
   try {
-    await query("UPDATE users SET avatar = $1, avatar_mime = $2 WHERE id = $3", [
-      bytes,
-      file.type,
-      session.user.id,
-    ])
+    // Prisma maps bytea -> Bytes and accepts a Node Buffer on write.
+    await getPrisma().user.update({
+      where: { id: session.user.id },
+      data: { avatar: bytes, avatarMime: file.type },
+    })
   } catch (err) {
     console.error("Avatar upload failed:", err)
     return { error: "Failed to upload image" }

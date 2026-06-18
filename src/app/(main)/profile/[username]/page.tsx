@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { auth } from "@/lib/auth"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import { fetchPosts } from "@/lib/queries"
 import { PostCard } from "@/components/PostCard"
 import { FollowButton } from "@/components/FollowButton"
@@ -22,7 +22,7 @@ async function getProfile(
   username: string,
   viewerId: string | null
 ): Promise<ProfileUser | null> {
-  const result = await query<ProfileUser>(
+  const rows = await getPrisma().$queryRawUnsafe<ProfileUser[]>(
     `SELECT u.id, u.username, u.bio, u.relationship_status, u.interests,
             u.courses, u.school, u.interested_in, u.looking_for, u.class_year,
             u.created_at,
@@ -41,26 +41,27 @@ async function getProfile(
                 WHERE fr.confirmed = true
                   AND (fr.requester_id = u.id OR fr.addressee_id = u.id)
                INTERSECT
-               SELECT CASE WHEN fv.requester_id = $2
+               SELECT CASE WHEN fv.requester_id = $2::uuid
                            THEN fv.addressee_id ELSE fv.requester_id END AS fid
                  FROM friendships fv
                 WHERE fv.confirmed = true
-                  AND $2 IS NOT NULL AND $2 <> u.id
-                  AND (fv.requester_id = $2 OR fv.addressee_id = $2)
+                  AND $2::uuid IS NOT NULL AND $2::uuid <> u.id
+                  AND (fv.requester_id = $2::uuid OR fv.addressee_id = $2::uuid)
              ) mutual) AS mutual_friend_count
        FROM users u
       WHERE u.username = $1`,
-    [username, viewerId]
+    username,
+    viewerId
   )
-  return result.rows[0] ?? null
+  return rows[0] ?? null
 }
 
 async function getViewerSchool(viewerId: string): Promise<string | null> {
-  const result = await query<{ school: string | null }>(
-    "SELECT school FROM users WHERE id = $1",
-    [viewerId]
-  )
-  return result.rows[0]?.school ?? null
+  const row = await getPrisma().user.findUnique({
+    where: { id: viewerId },
+    select: { school: true },
+  })
+  return row?.school ?? null
 }
 
 // The confirmed partner (if any) for the profile being viewed. One linked
@@ -69,30 +70,37 @@ async function getViewerSchool(viewerId: string): Promise<string | null> {
 async function getConfirmedPartner(
   userId: string
 ): Promise<{ username: string; status: string } | null> {
-  const result = await query<{ username: string; status: string }>(
+  const rows = await getPrisma().$queryRawUnsafe<
+    { username: string; status: string }[]
+  >(
     `SELECT u.username, r.status
        FROM relationships r
        JOIN users u
-         ON u.id = CASE WHEN r.requester_id = $1
+         ON u.id = CASE WHEN r.requester_id = $1::uuid
                         THEN r.addressee_id ELSE r.requester_id END
       WHERE r.confirmed = true
-        AND (r.requester_id = $1 OR r.addressee_id = $1)
+        AND (r.requester_id = $1::uuid OR r.addressee_id = $1::uuid)
       ORDER BY r.created_at DESC
       LIMIT 1`,
-    [userId]
+    userId
   )
-  return result.rows[0] ?? null
+  return rows[0] ?? null
 }
 
 async function isFollowing(
   followerId: string,
   targetUserId: string
 ): Promise<boolean> {
-  const result = await query(
-    "SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = $2",
-    [followerId, targetUserId]
-  )
-  return Boolean(result.rowCount && result.rowCount > 0)
+  const row = await getPrisma().follow.findUnique({
+    where: {
+      followerId_followingId: {
+        followerId,
+        followingId: targetUserId,
+      },
+    },
+    select: { followerId: true },
+  })
+  return row !== null
 }
 
 async function getUserPosts(
@@ -101,7 +109,7 @@ async function getUserPosts(
 ): Promise<PostWithAuthor[]> {
   return fetchPosts({
     viewerId,
-    where: `p.user_id = $2`,
+    where: `p.user_id = $2::uuid`,
     params: [userId],
   })
 }

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 
 export async function GET() {
   try {
-    await query("SELECT 1")
+    await getPrisma().$queryRaw`SELECT 1`
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error("Health check failed:", err)

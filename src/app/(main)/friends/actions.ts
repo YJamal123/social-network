@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import type { FriendshipState, FriendshipWithUser } from "@/lib/types"
 
 export type FriendState = { error?: string }
@@ -25,24 +25,32 @@ export async function sendFriendRequest(targetId: string): Promise<FriendState> 
   }
 
   try {
+    const prisma = getPrisma()
     // If the target already requested ME, confirm that row instead of opening a
     // duplicate in the other direction.
-    const reverse = await query(
-      "SELECT 1 FROM friendships WHERE requester_id = $1 AND addressee_id = $2 AND confirmed = false",
-      [targetId, meId]
-    )
-    if (reverse.rowCount && reverse.rowCount > 0) {
-      await query(
-        "UPDATE friendships SET confirmed = true WHERE requester_id = $1 AND addressee_id = $2",
-        [targetId, meId]
-      )
+    const reverse = await prisma.friendship.findUnique({
+      where: {
+        requesterId_addresseeId: { requesterId: targetId, addresseeId: meId },
+      },
+      select: { confirmed: true },
+    })
+    if (reverse && reverse.confirmed === false) {
+      await prisma.friendship.update({
+        where: {
+          requesterId_addresseeId: { requesterId: targetId, addresseeId: meId },
+        },
+        data: { confirmed: true },
+      })
     } else {
-      await query(
-        `INSERT INTO friendships (requester_id, addressee_id, confirmed)
-         VALUES ($1, $2, false)
-         ON CONFLICT (requester_id, addressee_id) DO NOTHING`,
-        [meId, targetId]
-      )
+      // ON CONFLICT DO NOTHING — an upsert with an empty update leaves any
+      // existing row untouched (and creates it if absent).
+      await prisma.friendship.upsert({
+        where: {
+          requesterId_addresseeId: { requesterId: meId, addresseeId: targetId },
+        },
+        create: { requesterId: meId, addresseeId: targetId, confirmed: false },
+        update: {},
+      })
     }
   } catch (err) {
     console.error("Send friend request failed:", err)
@@ -69,10 +77,10 @@ export async function confirmFriend(requesterId: string): Promise<FriendState> {
   }
 
   try {
-    await query(
-      "UPDATE friendships SET confirmed = true WHERE requester_id = $1 AND addressee_id = $2",
-      [requesterId, meId]
-    )
+    await getPrisma().friendship.updateMany({
+      where: { requesterId, addresseeId: meId },
+      data: { confirmed: true },
+    })
   } catch (err) {
     console.error("Confirm friend failed:", err)
     return { error: "Failed to confirm friend" }
@@ -96,10 +104,9 @@ export async function declineFriend(requesterId: string): Promise<FriendState> {
   }
 
   try {
-    await query(
-      "DELETE FROM friendships WHERE requester_id = $1 AND addressee_id = $2 AND confirmed = false",
-      [requesterId, meId]
-    )
+    await getPrisma().friendship.deleteMany({
+      where: { requesterId, addresseeId: meId, confirmed: false },
+    })
   } catch (err) {
     console.error("Decline friend failed:", err)
     return { error: "Failed to decline friend" }
@@ -124,12 +131,14 @@ export async function removeFriend(otherId: string): Promise<FriendState> {
   }
 
   try {
-    await query(
-      `DELETE FROM friendships
-        WHERE (requester_id = $1 AND addressee_id = $2)
-           OR (requester_id = $2 AND addressee_id = $1)`,
-      [meId, otherId]
-    )
+    await getPrisma().friendship.deleteMany({
+      where: {
+        OR: [
+          { requesterId: meId, addresseeId: otherId },
+          { requesterId: otherId, addresseeId: meId },
+        ],
+      },
+    })
   } catch (err) {
     console.error("Remove friend failed:", err)
     return { error: "Failed to remove friend" }
@@ -148,34 +157,28 @@ export async function getPendingFriendRequests(): Promise<FriendshipWithUser[]> 
     return []
   }
 
-  const result = await query<FriendshipWithUser>(
-    `SELECT f.requester_id, f.addressee_id, f.confirmed, f.created_at,
-            u.id AS user_id, u.username
-     FROM friendships f
-     JOIN users u ON u.id = f.requester_id
-     WHERE f.addressee_id = $1 AND f.confirmed = false
-     ORDER BY f.created_at DESC`,
-    [session.user.id]
-  )
-  return result.rows
+  return getPrisma().$queryRaw<FriendshipWithUser[]>`
+    SELECT f.requester_id, f.addressee_id, f.confirmed, f.created_at,
+           u.id AS user_id, u.username
+    FROM friendships f
+    JOIN users u ON u.id = f.requester_id
+    WHERE f.addressee_id = ${session.user.id}::uuid AND f.confirmed = false
+    ORDER BY f.created_at DESC`
 }
 
 // Confirmed friends of the given user, both directions, joined with the OTHER
 // user's username + id, newest first.
 export async function getFriends(userId: string): Promise<FriendshipWithUser[]> {
-  const result = await query<FriendshipWithUser>(
-    `SELECT f.requester_id, f.addressee_id, f.confirmed, f.created_at,
-            u.id AS user_id, u.username
-     FROM friendships f
-     JOIN users u
-       ON u.id = CASE WHEN f.requester_id = $1
-                      THEN f.addressee_id ELSE f.requester_id END
-     WHERE f.confirmed = true
-       AND (f.requester_id = $1 OR f.addressee_id = $1)
-     ORDER BY f.created_at DESC`,
-    [userId]
-  )
-  return result.rows
+  return getPrisma().$queryRaw<FriendshipWithUser[]>`
+    SELECT f.requester_id, f.addressee_id, f.confirmed, f.created_at,
+           u.id AS user_id, u.username
+    FROM friendships f
+    JOIN users u
+      ON u.id = CASE WHEN f.requester_id = ${userId}::uuid
+                     THEN f.addressee_id ELSE f.requester_id END
+    WHERE f.confirmed = true
+      AND (f.requester_id = ${userId}::uuid OR f.addressee_id = ${userId}::uuid)
+    ORDER BY f.created_at DESC`
 }
 
 // The viewer's friendship state with another user, from the viewer's POV.
@@ -190,17 +193,18 @@ export async function getFriendshipState(
     return "none"
   }
 
-  const result = await query<{ requester_id: string; confirmed: boolean }>(
-    `SELECT requester_id, confirmed FROM friendships
-      WHERE (requester_id = $1 AND addressee_id = $2)
-         OR (requester_id = $2 AND addressee_id = $1)
-      LIMIT 1`,
-    [viewerId, otherId]
-  )
-  const row = result.rows[0]
+  const row = await getPrisma().friendship.findFirst({
+    where: {
+      OR: [
+        { requesterId: viewerId, addresseeId: otherId },
+        { requesterId: otherId, addresseeId: viewerId },
+      ],
+    },
+    select: { requesterId: true, confirmed: true },
+  })
   if (!row) return "none"
   if (row.confirmed) return "friends"
-  return row.requester_id === viewerId ? "pending_out" : "pending_in"
+  return row.requesterId === viewerId ? "pending_out" : "pending_in"
 }
 
 // Count incoming, unconfirmed friend requests aimed at the current user. Used by
@@ -212,11 +216,9 @@ export async function getPendingFriendRequestCount(): Promise<number> {
   }
 
   try {
-    const result = await query<{ count: number }>(
-      "SELECT COUNT(*)::int AS count FROM friendships WHERE addressee_id = $1 AND confirmed = false",
-      [session.user.id]
-    )
-    return result.rows[0]?.count ?? 0
+    return await getPrisma().friendship.count({
+      where: { addresseeId: session.user.id, confirmed: false },
+    })
   } catch (err) {
     console.error("Count friend requests failed:", err)
     return 0

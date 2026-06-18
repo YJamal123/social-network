@@ -70,6 +70,23 @@ export default function LoginPage() {
             {pending ? "Logging in…" : "Log in"}
           </button>
 
+          <div className="flex items-center gap-2 text-body-sm text-outline">
+            <span className="h-px flex-1 bg-outline-variant" />
+            or
+            <span className="h-px flex-1 bg-outline-variant" />
+          </div>
+
+          {/* Auth0 Universal Login (Google + the Auth0 Database connection).
+              Sends the user to Auth0; the callback lands at
+              /api/auth/callback/auth0 and NextAuth provisions the session. */}
+          <button
+            type="button"
+            onClick={() => signIn("auth0", { callbackUrl: "/feed" })}
+            className={`${buttonClass.outline} w-full`}
+          >
+            Continue with Auth0
+          </button>
+
           <p className="text-center text-body-sm text-outline">
             No account?{" "}
             <Link href="/register" className="bracket-link text-primary hover:underline">

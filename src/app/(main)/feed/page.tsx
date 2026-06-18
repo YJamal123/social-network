@@ -21,10 +21,10 @@ async function getPosts(userId: string): Promise<PostWithAuthor[]> {
   return fetchPosts({
     viewerId: userId,
     cte: `WITH my_follows AS (
-            SELECT following_id FROM follows WHERE follower_id = $1
+            SELECT following_id FROM follows WHERE follower_id = $1::uuid
           )`,
     where: `NOT EXISTS (SELECT 1 FROM my_follows)
-            OR p.user_id = $1
+            OR p.user_id = $1::uuid
             OR p.user_id IN (SELECT following_id FROM my_follows)`,
   })
 }

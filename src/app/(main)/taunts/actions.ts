@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import type { TauntWithTaunter } from "@/lib/types"
 
 export type TauntState = { error?: string }
@@ -24,22 +24,22 @@ export async function taunt(targetId: string): Promise<TauntState> {
   }
 
   try {
-    const schools = await query<{ id: string; school: string | null }>(
-      "SELECT id, school FROM users WHERE id IN ($1, $2)",
-      [taunterId, targetId]
-    )
-    const taunterSchool = schools.rows.find((r) => r.id === taunterId)?.school ?? null
-    const taunteeSchool = schools.rows.find((r) => r.id === targetId)?.school ?? null
+    const prisma = getPrisma()
+    const schools = await prisma.user.findMany({
+      where: { id: { in: [taunterId, targetId] } },
+      select: { id: true, school: true },
+    })
+    const taunterSchool = schools.find((r) => r.id === taunterId)?.school ?? null
+    const taunteeSchool = schools.find((r) => r.id === targetId)?.school ?? null
     if (!taunterSchool || !taunteeSchool || taunterSchool === taunteeSchool) {
       return { error: "You can only taunt rival schools" }
     }
 
-    await query(
-      `INSERT INTO taunts (taunter_id, tauntee_id) VALUES ($1, $2)
-       ON CONFLICT (taunter_id, tauntee_id)
-       DO UPDATE SET created_at = now(), acknowledged = false`,
-      [taunterId, targetId]
-    )
+    await prisma.taunt.upsert({
+      where: { taunterId_taunteeId: { taunterId, taunteeId: targetId } },
+      create: { taunterId, taunteeId: targetId },
+      update: { createdAt: new Date(), acknowledged: false },
+    })
   } catch (err) {
     console.error("Taunt failed:", err)
     return { error: "Failed to taunt" }
@@ -59,11 +59,9 @@ export async function getUnacknowledgedTauntCount(): Promise<number> {
   }
 
   try {
-    const result = await query<{ count: number }>(
-      "SELECT COUNT(*)::int AS count FROM taunts WHERE tauntee_id = $1 AND acknowledged = false",
-      [session.user.id]
-    )
-    return result.rows[0]?.count ?? 0
+    return await getPrisma().taunt.count({
+      where: { taunteeId: session.user.id, acknowledged: false },
+    })
   } catch (err) {
     console.error("Count taunts failed:", err)
     return 0
@@ -86,26 +84,27 @@ export async function tauntBack(taunterId: string): Promise<TauntState> {
   }
 
   try {
-    const schools = await query<{ id: string; school: string | null }>(
-      "SELECT id, school FROM users WHERE id IN ($1, $2)",
-      [meId, taunterId]
-    )
-    const meSchool = schools.rows.find((r) => r.id === meId)?.school ?? null
-    const themSchool = schools.rows.find((r) => r.id === taunterId)?.school ?? null
+    const prisma = getPrisma()
+    const schools = await prisma.user.findMany({
+      where: { id: { in: [meId, taunterId] } },
+      select: { id: true, school: true },
+    })
+    const meSchool = schools.find((r) => r.id === meId)?.school ?? null
+    const themSchool = schools.find((r) => r.id === taunterId)?.school ?? null
     if (!meSchool || !themSchool || meSchool === themSchool) {
       return { error: "You can only taunt rival schools" }
     }
 
-    await query(
-      `INSERT INTO taunts (taunter_id, tauntee_id) VALUES ($1, $2)
-       ON CONFLICT (taunter_id, tauntee_id)
-       DO UPDATE SET created_at = now(), acknowledged = false`,
-      [meId, taunterId]
-    )
-    await query(
-      "UPDATE taunts SET acknowledged = true WHERE taunter_id = $1 AND tauntee_id = $2",
-      [taunterId, meId]
-    )
+    await prisma.taunt.upsert({
+      where: { taunterId_taunteeId: { taunterId: meId, taunteeId: taunterId } },
+      create: { taunterId: meId, taunteeId: taunterId },
+      update: { createdAt: new Date(), acknowledged: false },
+    })
+    // updateMany so a missing row is a silent no-op (matches old UPDATE … WHERE).
+    await prisma.taunt.updateMany({
+      where: { taunterId, taunteeId: meId },
+      data: { acknowledged: true },
+    })
   } catch (err) {
     console.error("Taunt back failed:", err)
     return { error: "Failed to taunt back" }
@@ -125,10 +124,10 @@ export async function acknowledgeTaunts(): Promise<TauntState> {
   }
 
   try {
-    await query(
-      "UPDATE taunts SET acknowledged = true WHERE tauntee_id = $1 AND acknowledged = false",
-      [session.user.id]
-    )
+    await getPrisma().taunt.updateMany({
+      where: { taunteeId: session.user.id, acknowledged: false },
+      data: { acknowledged: true },
+    })
   } catch (err) {
     console.error("Acknowledge taunts failed:", err)
     return { error: "Failed to acknowledge taunts" }
@@ -146,16 +145,13 @@ export async function getTaunters(): Promise<TauntWithTaunter[]> {
     return []
   }
 
-  const result = await query<TauntWithTaunter>(
-    `SELECT t.taunter_id, t.tauntee_id, t.created_at, t.acknowledged,
-            u.username AS taunter_username, u.school AS taunter_school
-     FROM taunts t
-     JOIN users u ON u.id = t.taunter_id
-     WHERE t.tauntee_id = $1
-     ORDER BY t.created_at DESC`,
-    [session.user.id]
-  )
-  return result.rows
+  return getPrisma().$queryRaw<TauntWithTaunter[]>`
+    SELECT t.taunter_id, t.tauntee_id, t.created_at, t.acknowledged,
+           u.username AS taunter_username, u.school AS taunter_school
+    FROM taunts t
+    JOIN users u ON u.id = t.taunter_id
+    WHERE t.tauntee_id = ${session.user.id}::uuid
+    ORDER BY t.created_at DESC`
 }
 
 // The current viewer's own school, used to anchor the head-to-head scoreboard.
@@ -167,11 +163,11 @@ export async function getViewerSchool(): Promise<string | null> {
   }
 
   try {
-    const result = await query<{ school: string | null }>(
-      "SELECT school FROM users WHERE id = $1",
-      [session.user.id]
-    )
-    return result.rows[0]?.school ?? null
+    const row = await getPrisma().user.findUnique({
+      where: { id: session.user.id },
+      select: { school: true },
+    })
+    return row?.school ?? null
   } catch (err) {
     console.error("Get viewer school failed:", err)
     return null
@@ -187,19 +183,19 @@ export async function getHeadToHead(
   schoolB: string
 ): Promise<{ a: number; b: number }> {
   try {
-    const result = await query<{ school: string; count: number }>(
-      `SELECT tr.school AS school, COUNT(*)::int AS count
-       FROM taunts t
-       JOIN users tr ON tr.id = t.taunter_id
-       JOIN users te ON te.id = t.tauntee_id
-       WHERE tr.school IN ($1, $2)
-         AND te.school IN ($1, $2)
-         AND tr.school <> te.school
-       GROUP BY tr.school`,
-      [schoolA, schoolB]
-    )
-    const a = result.rows.find((r) => r.school === schoolA)?.count ?? 0
-    const b = result.rows.find((r) => r.school === schoolB)?.count ?? 0
+    const rows = await getPrisma().$queryRaw<
+      { school: string; count: number }[]
+    >`
+      SELECT tr.school AS school, COUNT(*)::int AS count
+      FROM taunts t
+      JOIN users tr ON tr.id = t.taunter_id
+      JOIN users te ON te.id = t.tauntee_id
+      WHERE tr.school IN (${schoolA}, ${schoolB})
+        AND te.school IN (${schoolA}, ${schoolB})
+        AND tr.school <> te.school
+      GROUP BY tr.school`
+    const a = rows.find((r) => r.school === schoolA)?.count ?? 0
+    const b = rows.find((r) => r.school === schoolB)?.count ?? 0
     return { a, b }
   } catch (err) {
     console.error("Head-to-head failed:", err)
