@@ -2,6 +2,7 @@ import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import Auth0 from "next-auth/providers/auth0"
 import bcrypt from "bcryptjs"
+import { Prisma } from "@prisma/client"
 import { getPrisma } from "@/lib/db"
 import { authConfig } from "@/lib/auth.config"
 
@@ -54,55 +55,98 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // or `user` present for credentials) and on session.update() triggers.
     // Enriches the token with our DB identity. Overrides the thin edge jwt.
     async jwt({ token, account, profile, user, trigger }) {
-      // --- Auth0 first sign-in: provision-on-first-login (race-safe). ---
+      // --- Auth0 sign-in: resolve (or provision) the matching users row. ---
+      // The whole branch is wrapped so a DB hiccup or a constraint collision
+      // degrades to "please retry" instead of a NextAuth error=Configuration
+      // 500 that locks the user out of every Auth0 login.
       if (account?.provider === "auth0" && profile) {
-        const prisma = getPrisma()
-        const sub = profile.sub as string
-        const email =
-          (profile.email as string | undefined)?.trim().toLowerCase() ?? null
-        const verified = profile.email_verified === true
+        try {
+          const prisma = getPrisma()
+          const sub = profile.sub as string
+          const email =
+            (profile.email as string | undefined)?.trim().toLowerCase() ?? null
+          const verified = profile.email_verified === true
+          const select = { id: true, username: true, onboardedAt: true } as const
 
-        // 1) Race-safe insert-or-fetch keyed on auth0_sub (unique). A concurrent
-        //    first request hits the unique constraint and the update branch
-        //    no-ops, so we always end up with exactly one row.
-        let row = await prisma.user.upsert({
-          where: { auth0Sub: sub },
-          create: { auth0Sub: sub, email: email ?? `${sub}@auth0.local` },
-          update: {},
-          select: { id: true, username: true, onboardedAt: true },
-        })
-
-        // 2) Link-by-email adoption — ONLY for verified emails, ONLY when this
-        //    is a brand-new placeholder row (no username, not onboarded) and a
-        //    legacy row with the same email exists without an auth0_sub.
-        //    Gating on email_verified blocks the account-takeover vector.
-        if (
-          verified &&
-          email &&
-          row.username === null &&
-          row.onboardedAt === null
-        ) {
-          const legacy = await prisma.user.findFirst({
-            where: { email, auth0Sub: null },
-            select: { id: true, username: true, onboardedAt: true },
+          // 1) Exact match on this Auth0 identity.
+          let row = await prisma.user.findUnique({
+            where: { auth0Sub: sub },
+            select,
           })
-          if (legacy) {
-            const adopted = await prisma.user.update({
-              where: { id: legacy.id },
-              data: { auth0Sub: sub },
-              select: { id: true, username: true, onboardedAt: true },
-            })
-            // Drop the just-created placeholder, keep the legacy row + its data.
-            await prisma.user.deleteMany({
-              where: { id: row.id, username: null },
-            })
-            row = adopted
-          }
-        }
 
-        token.id = row.id
-        token.name = row.username // OVERWRITE OIDC name with our DB username
-        token.onboarded = row.onboardedAt !== null
+          // 2) No row for this sub yet. With a VERIFIED email, resolve to the
+          //    existing row that owns that (UNIQUE) email rather than trying to
+          //    create a duplicate — a naive create would throw on the email
+          //    constraint (the original bug). This both (a) adopts legacy
+          //    credential rows (auth0Sub IS NULL) and (b) unifies a returning
+          //    user who came back through a different Auth0 connection — Google
+          //    vs the database connection mint different `sub`s for the same
+          //    person. Unverified emails are NOT trusted: account-takeover guard.
+          if (!row && verified && email) {
+            const existing = await prisma.user.findUnique({
+              where: { email },
+              select: { ...select, auth0Sub: true },
+            })
+            if (existing) {
+              if (existing.auth0Sub === null) {
+                // Legacy/credential row — claim it for this Auth0 identity.
+                row = await prisma.user.update({
+                  where: { id: existing.id },
+                  data: { auth0Sub: sub },
+                  select,
+                })
+              } else {
+                // Same verified email, already bound to another connection's
+                // sub — same human; log into that row without rebinding it.
+                row = {
+                  id: existing.id,
+                  username: existing.username,
+                  onboardedAt: existing.onboardedAt,
+                }
+              }
+            }
+          }
+
+          // 3) Brand-new user — create race-safely. Attach the email only if it
+          //    is still free; otherwise store a synthetic address so the unique
+          //    constraint can't bite. Onboarding collects the real profile.
+          if (!row) {
+            const emailFree =
+              !!email &&
+              !(await prisma.user.findUnique({
+                where: { email },
+                select: { id: true },
+              }))
+            try {
+              row = await prisma.user.create({
+                data: {
+                  auth0Sub: sub,
+                  email: emailFree ? (email as string) : `${sub}@auth0.local`,
+                },
+                select,
+              })
+            } catch (e) {
+              // Lost the create race on auth0_sub — fetch the winner's row.
+              if (
+                e instanceof Prisma.PrismaClientKnownRequestError &&
+                e.code === "P2002"
+              ) {
+                row = await prisma.user.findUnique({
+                  where: { auth0Sub: sub },
+                  select,
+                })
+              } else throw e
+            }
+          }
+
+          if (row) {
+            token.id = row.id
+            token.name = row.username // DB username, not the OIDC display name
+            token.onboarded = row.onboardedAt !== null
+          }
+        } catch (err) {
+          console.error("Auth0 jwt provisioning failed:", err)
+        }
         return token
       }
 

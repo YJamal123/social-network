@@ -43,6 +43,10 @@ export async function register(
         passwordHash,
         school,
         classYear,
+        // Manual registration already collects username/school/class_year, so
+        // the row is fully provisioned — stamp onboardedAt now so authorize()
+        // returns onboarded:true and the user is NOT gated into /onboarding.
+        onboardedAt: new Date(),
       },
     })
   } catch (err) {
