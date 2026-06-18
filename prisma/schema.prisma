@@ -27,9 +27,15 @@ datasource db {
 
 model User {
   id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  username           String   @unique
+  // username/passwordHash relaxed to nullable for the Auth0 transition: an
+  // Auth0-provisioned row has no username until onboarding and no password at
+  // all. The UNIQUE constraint on username stays (Postgres treats multiple NULLs
+  // as distinct, so many un-onboarded rows coexist; app-layer onboarding enforces
+  // presence + uniqueness). The credentials path keeps writing both, so existing
+  // rows are unaffected.
+  username           String?  @unique
   email              String   @unique
-  passwordHash       String   @map("password_hash")
+  passwordHash       String?  @map("password_hash")
   bio                String?
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   // Columns added later via ALTER TABLE ... ADD COLUMN IF NOT EXISTS.
@@ -42,6 +48,11 @@ model User {
   interestedIn       String?  @map("interested_in")
   lookingFor         String?  @map("looking_for")
   classYear          Int?     @map("class_year")
+  // Auth0 OIDC join key (stable `sub`). Nullable + @unique → partial unique index
+  // (NULLs allowed for legacy/credentials rows). onboardedAt gates the one-time
+  // /onboarding step for Auth0 users lacking username/school/class_year.
+  auth0Sub           String?  @unique @map("auth0_sub")
+  onboardedAt        DateTime? @map("onboarded_at") @db.Timestamptz(6)
 
   posts              Post[]
   comments           Comment[]
