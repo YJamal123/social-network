@@ -20,11 +20,13 @@
 #   GCP_WIF_PROVIDER     projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github-pool/providers/github-provider
 #
 # Repository SECRETS ("Secrets" tab):
-#   MIGRATE_TOKEN        value of NEXTAUTH_SECRET *including its trailing newline*
-#                        (see MEMORY: the secret is 44 base64 chars + "\n"; the
-#                        migrate token must include + URL-encode the newline or
-#                        the route returns 401). Store the raw secret here; the
-#                        workflow URL-encodes it before calling /api/migrate.
+#   MIGRATE_TOKEN        the NEXTAUTH_SECRET value — store the CLEAN 44-char
+#                        secret WITHOUT a trailing newline. The running Cloud Run
+#                        service's NEXTAUTH_SECRET ends in a "\n" (its secret is
+#                        pinned to an older version that had one; verified live:
+#                        clean token -> 401, token+"\n" -> 200). The migrate step
+#                        below strips any stray newline and appends exactly one
+#                        before URL-encoding, so a clean paste matches the route.
 #
 # ─────────────────────────────────────────────────────────────────────────────
 # ONE-TIME WIF SETUP (run once by a project owner; replace PROJECT_NUMBER and the
@@ -152,9 +154,12 @@ jobs:
           MIGRATE_TOKEN: ${{ secrets.MIGRATE_TOKEN }}
         run: |
           # The migrate route compares the token to NEXTAUTH_SECRET exactly,
-          # including its trailing newline — so we URL-encode the raw secret
-          # (newline -> %0A) rather than passing it bare. --fail makes a 401/500
-          # fail the job.
-          ENCODED=$(printf '%s' "$MIGRATE_TOKEN" | jq -sRr @uri)
+          # including the trailing newline the running service's secret carries
+          # (verified live: clean token -> 401, token+"\n" -> 200). Normalize the
+          # stored secret to a clean value, then append exactly one newline and
+          # URL-encode (newline -> %0A) so it matches however MIGRATE_TOKEN was
+          # pasted. --fail makes a 401/500 fail the job.
+          CLEAN=$(printf '%s' "$MIGRATE_TOKEN" | tr -d '\r\n')
+          ENCODED=$(printf '%s\n' "$CLEAN" | jq -sRr @uri)
           curl --fail --silent --show-error -X POST \
             "${SERVICE_URL}/api/migrate?token=${ENCODED}"
