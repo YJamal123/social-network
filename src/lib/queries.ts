@@ -63,9 +63,13 @@ export async function fetchUserSchool(userId: string): Promise<string | null> {
  * Server-only.
  */
 export async function fetchRecentUsers(limit = 3): Promise<RecentUser[]> {
-  return getPrisma().user.findMany({
+  // Only surface onboarded members: Auth0 rows have a NULL username until
+  // onboarding, and the directory preview can't link to a null username.
+  const rows = await getPrisma().user.findMany({
+    where: { username: { not: null } },
     select: { id: true, username: true },
     orderBy: { createdAt: "desc" },
     take: limit,
   })
+  return rows.map((r) => ({ id: r.id, username: r.username as string }))
 }

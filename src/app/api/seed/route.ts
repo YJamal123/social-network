@@ -698,6 +698,10 @@ export async function POST(request: Request) {
               username: u.username,
               email: `${u.username}@demo.sml`,
               passwordHash,
+              // Seeded demo users are fully-profiled, so mark them onboarded:
+              // the credentials path sets token.onboarded from this, and an
+              // Auth0 verified link-by-email adoption skips /onboarding.
+              onboardedAt: new Date(),
               bio: u.bio,
               school: u.school,
               classYear: u.classYear ?? null,

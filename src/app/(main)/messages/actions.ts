@@ -125,13 +125,16 @@ export async function getThread(
     return { partner: null, messages: [] }
   }
 
-  const partner = await getPrisma().user.findUnique({
+  const found = await getPrisma().user.findUnique({
     where: { username },
     select: { id: true, username: true },
   })
-  if (!partner) {
+  if (!found || found.username === null) {
     return { partner: null, messages: [] }
   }
+  // Narrow username to non-null for the return type: we looked it up BY a
+  // non-null username, so this is always set, but Prisma now types it nullable.
+  const partner = { id: found.id, username: found.username }
 
   const viewerId = session.user.id
   const messages = await getPrisma().$queryRaw<MessageWithSender[]>`
