@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useFormState } from "react-dom"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -17,8 +17,16 @@ export default function OnboardingPage() {
   // On success: refresh the JWT (flips token.onboarded → true via the Node jwt
   // "update" branch) BEFORE navigating, so the authorized callback lets us into
   // /feed instead of looping back to /onboarding.
+  //
+  // One-shot guard: `update` from useSession() gets a NEW identity on every
+  // render, and calling update() refetches the session → re-render → new
+  // identity → this effect would re-fire and call update() again, ∞-looping
+  // /api/auth/session until the client throws. The ref ensures we run the
+  // refresh-then-navigate exactly once.
+  const navigatedRef = useRef(false)
   useEffect(() => {
-    if (state.ok) {
+    if (state.ok && !navigatedRef.current) {
+      navigatedRef.current = true
       void update().then(() => router.push("/feed"))
     }
   }, [state.ok, update, router])
