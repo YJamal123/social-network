@@ -127,20 +127,35 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Build & push image (Cloud Build)
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT }}
+          REGION: ${{ vars.GCP_REGION }}
         run: |
-          IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT }}/${{ vars.GCP_AR_REPO }}/${{ vars.CLOUD_RUN_SERVICE }}:${{ github.sha }}"
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${{ vars.GCP_AR_REPO }}/${{ vars.CLOUD_RUN_SERVICE }}:${{ github.sha }}"
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
-          # --suppress-logs: the deploy SA intentionally lacks project
-          # Viewer/Owner, so gcloud can't STREAM build logs to stdout and would
-          # exit 1 even on a successful build. Suppressing the stream still waits
-          # for the build and fails the job if the build itself fails; the full
-          # logs remain in the Cloud Build console (URL printed above).
-          gcloud builds submit \
-            --project="${{ vars.GCP_PROJECT }}" \
-            --region="${{ vars.GCP_REGION }}" \
-            --tag="$IMAGE" \
-            --suppress-logs \
-            .
+          # The deploy SA intentionally lacks project Viewer/Owner, so gcloud
+          # cannot stream regional Cloud Build logs and exits 1 even when the
+          # build SUCCEEDS (--suppress-logs does not help — it still does a final
+          # log fetch). So submit --async and poll the build status ourselves;
+          # this never touches log streaming and needs only builds.get, which
+          # roles/cloudbuild.builds.editor already grants. Full logs stay in the
+          # Cloud Build console (URL printed below).
+          BUILD_ID=$(gcloud builds submit \
+            --project="$PROJECT" --region="$REGION" \
+            --tag="$IMAGE" --async --format='value(id)' .)
+          echo "Submitted Cloud Build: $BUILD_ID"
+          echo "Logs: https://console.cloud.google.com/cloud-build/builds;region=$REGION/$BUILD_ID?project=$PROJECT"
+          while true; do
+            STATUS=$(gcloud builds describe "$BUILD_ID" \
+              --project="$PROJECT" --region="$REGION" --format='value(status)')
+            echo "build status: $STATUS"
+            case "$STATUS" in
+              SUCCESS) echo "Build succeeded."; break ;;
+              FAILURE|INTERNAL_ERROR|TIMEOUT|CANCELLED|EXPIRED)
+                echo "Build ended with status: $STATUS"; exit 1 ;;
+            esac
+            sleep 5
+          done
 
       - name: Deploy to Cloud Run
         run: |
