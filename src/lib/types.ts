@@ -161,6 +161,17 @@ export interface RecentUser {
   username: string
 }
 
+// Structured directory-search filters, parsed from the GET query string.
+// `year` is a parsed class year (or null when absent/invalid). The text fields
+// are raw strings (blank = no filter).
+export interface DirectoryFilters {
+  q: string
+  school: string
+  year: number | null
+  course: string
+  interest: string
+}
+
 // A user row in the directory list — with the viewer's follow state
 export interface DirectoryRow {
   id: string

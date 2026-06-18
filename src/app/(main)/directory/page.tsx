@@ -6,13 +6,16 @@ import { DirectorySearch } from "@/components/DirectorySearch"
 import { Panel } from "@/components/Panel"
 import { UserRow } from "@/components/UserRow"
 import { EmptyState } from "@/components/EmptyState"
-import type { DirectoryRow } from "@/lib/types"
+import { buildUserSearch } from "@/lib/directory"
+import { isValidClassYear } from "@/lib/classYears"
+import type { DirectoryFilters, DirectoryRow } from "@/lib/types"
 
 async function getUsers(
   viewerId: string | null,
-  q: string
+  filters: DirectoryFilters
 ): Promise<DirectoryRow[]> {
-  const like = `%${q}%`
+  // $1 is the viewer id; the structured filters splice in from $2 onward.
+  const { where, params } = buildUserSearch(filters, 2)
   const result = await query<DirectoryRow>(
     `SELECT u.id, u.username, u.bio, u.school,
             EXISTS (
@@ -20,10 +23,10 @@ async function getUsers(
                WHERE f.follower_id = $1 AND f.following_id = u.id
             ) AS followed_by_me
        FROM users u
-      WHERE ($2 = '' OR u.username ILIKE $3)
+      WHERE ${where}
       ORDER BY u.username ASC
       LIMIT 100`,
-    [viewerId, q, like]
+    [viewerId, ...params]
   )
   return result.rows
 }
@@ -31,17 +34,34 @@ async function getUsers(
 export default async function DirectoryPage({
   searchParams,
 }: {
-  searchParams: { q?: string }
+  searchParams: {
+    q?: string
+    school?: string
+    year?: string
+    course?: string
+    interest?: string
+  }
 }) {
   const session = await auth()
   const viewerId = session?.user?.id ?? null
-  const q = (searchParams.q ?? "").trim()
-  const users = await getUsers(viewerId, q)
+
+  const yearNum = Number((searchParams.year ?? "").trim())
+  const filters: DirectoryFilters = {
+    q: (searchParams.q ?? "").trim(),
+    school: (searchParams.school ?? "").trim(),
+    year: isValidClassYear(yearNum) ? yearNum : null,
+    course: (searchParams.course ?? "").trim(),
+    interest: (searchParams.interest ?? "").trim(),
+  }
+  const hasFilters = Boolean(
+    filters.q || filters.school || filters.year || filters.course || filters.interest
+  )
+  const users = await getUsers(viewerId, filters)
 
   return (
     <main className="mx-auto flex max-w-container-max flex-col gap-gutter px-gutter py-stack-lg">
       <Panel title="search the network">
-        <DirectorySearch initialQuery={q} />
+        <DirectorySearch initialFilters={filters} />
       </Panel>
 
       <Panel
@@ -56,9 +76,11 @@ export default async function DirectoryPage({
         {users.length === 0 ? (
           <EmptyState
             icon="person_search"
-            message={q ? `No users match “${q}”.` : "No users yet."}
+            message={
+              hasFilters ? "No users match your search." : "No users yet."
+            }
           >
-            {q && (
+            {hasFilters && (
               <Link
                 href="/directory"
                 className="bracket-link text-action-link text-primary hover:underline"
