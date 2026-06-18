@@ -1,0 +1,205 @@
+// Authoritative data model for the SML social network.
+//
+// Derived faithfully from the legacy idempotent SCHEMA string that previously
+// lived in src/app/api/migrate/route.ts (the only thing that ever created prod
+// tables). Snake_case DB names are preserved via @map/@@map so the runtime SQL
+// is byte-identical to the pg era. CHECK constraints (char_length <= 280 and the
+// two self-reference <> guards) are NOT modelable in Prisma — they are
+// hand-appended as raw SQL inside prisma/migrations/0_init/migration.sql.
+//
+// Migrations are applied in prod by the `mdjamal-migrate` Cloud Run Job running
+// `prisma migrate deploy` inside the VPC (Cloud SQL is private-IP only).
+
+generator client {
+  provider      = "prisma-client-js"
+  // Runtime image is node:20-alpine (musl + OpenSSL 3). "native" covers the dev
+  // laptop; linux-musl-openssl-3.0.x is the Cloud Run engine. Wrong target here
+  // is the #1 Prisma-on-Alpine failure ("query engine binary not found").
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // No directUrl in phase 1: there is no connection pooler, so it would equal
+  // url and only add a second mandatory env var. Add it when a pooler arrives.
+}
+
+model User {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username           String   @unique
+  email              String   @unique
+  passwordHash       String   @map("password_hash")
+  bio                String?
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  // Columns added later via ALTER TABLE ... ADD COLUMN IF NOT EXISTS.
+  relationshipStatus String?  @map("relationship_status")
+  interests          String?
+  courses            String?
+  avatar             Bytes?   @db.ByteA
+  avatarMime         String?  @map("avatar_mime")
+  school             String?
+  interestedIn       String?  @map("interested_in")
+  lookingFor         String?  @map("looking_for")
+  classYear          Int?     @map("class_year")
+
+  posts              Post[]
+  comments           Comment[]
+  likes              Like[]
+  wallPostsOwned     WallPost[]     @relation("WallOwner")
+  wallPostsAuthored  WallPost[]     @relation("WallAuthor")
+  following          Follow[]       @relation("Follower")
+  followers          Follow[]       @relation("Following")
+  pokesSent          Poke[]         @relation("Poker")
+  pokesReceived      Poke[]         @relation("Pokee")
+  tauntsSent         Taunt[]        @relation("Taunter")
+  tauntsReceived     Taunt[]        @relation("Tauntee")
+  relationshipsOut   Relationship[] @relation("RelRequester")
+  relationshipsIn    Relationship[] @relation("RelAddressee")
+  friendshipsOut     Friendship[]   @relation("FriendRequester")
+  friendshipsIn      Friendship[]   @relation("FriendAddressee")
+  messagesSent       Message[]      @relation("MsgSender")
+  messagesReceived   Message[]      @relation("MsgRecipient")
+
+  @@map("users")
+}
+
+model Post {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  likes     Like[]
+
+  @@index([userId], map: "posts_user_id_idx")
+  @@index([createdAt(sort: Desc)], map: "posts_created_at_idx")
+  @@map("posts")
+}
+
+model Follow {
+  followerId  String @map("follower_id") @db.Uuid
+  followingId String @map("following_id") @db.Uuid
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId], map: "follows_following_id_idx")
+  @@map("follows")
+}
+
+model Like {
+  userId String @map("user_id") @db.Uuid
+  postId String @map("post_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([postId], map: "likes_post_id_idx")
+  @@map("likes")
+}
+
+model Comment {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId], map: "comments_post_id_idx")
+  @@map("comments")
+}
+
+model WallPost {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId   String   @map("owner_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  owner  User @relation("WallOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  author User @relation("WallAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId], map: "wall_posts_owner_id_idx")
+  @@map("wall_posts")
+}
+
+model Poke {
+  pokerId      String   @map("poker_id") @db.Uuid
+  pokeeId      String   @map("pokee_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  acknowledged Boolean  @default(false)
+
+  poker User @relation("Poker", fields: [pokerId], references: [id], onDelete: Cascade)
+  pokee User @relation("Pokee", fields: [pokeeId], references: [id], onDelete: Cascade)
+
+  @@id([pokerId, pokeeId])
+  @@index([pokeeId], map: "pokes_pokee_id_idx")
+  @@map("pokes")
+}
+
+model Taunt {
+  taunterId    String   @map("taunter_id") @db.Uuid
+  taunteeId    String   @map("tauntee_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  acknowledged Boolean  @default(false)
+
+  taunter User @relation("Taunter", fields: [taunterId], references: [id], onDelete: Cascade)
+  tauntee User @relation("Tauntee", fields: [taunteeId], references: [id], onDelete: Cascade)
+
+  @@id([taunterId, taunteeId])
+  @@index([taunteeId], map: "taunts_tauntee_id_idx")
+  @@map("taunts")
+}
+
+model Relationship {
+  requesterId String   @map("requester_id") @db.Uuid
+  addresseeId String   @map("addressee_id") @db.Uuid
+  status      String
+  confirmed   Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  requester User @relation("RelRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("RelAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@id([requesterId, addresseeId])
+  @@index([addresseeId], map: "relationships_addressee_id_idx")
+  @@map("relationships")
+}
+
+model Friendship {
+  requesterId String   @map("requester_id") @db.Uuid
+  addresseeId String   @map("addressee_id") @db.Uuid
+  confirmed   Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  requester User @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@id([requesterId, addresseeId])
+  @@index([addresseeId], map: "friendships_addressee_id_idx")
+  @@map("friendships")
+}
+
+model Message {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  senderId    String   @map("sender_id") @db.Uuid
+  recipientId String   @map("recipient_id") @db.Uuid
+  content     String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  sender    User @relation("MsgSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient User @relation("MsgRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId], map: "messages_recipient_id_idx")
+  @@index([senderId, recipientId, createdAt(sort: Desc)], map: "messages_pair_idx")
+  @@map("messages")
+}
