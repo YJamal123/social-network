@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import getPool from "@/lib/db"
+import { DEMO_AVATARS } from "./avatars"
 
 // One-shot, idempotent demo-data seeder. Mirrors /api/migrate: token-guarded and
 // run from inside the VPC (Cloud SQL is private-IP only, unreachable from a laptop).
@@ -548,6 +549,11 @@ const RELATIONSHIPS: [number, number, string, boolean][] = [
   [15, 9, "In a relationship", true], // premed_paula <-> rower_chad (confirmed)
   [12, 16, "In a relationship", true], // a_capella_amy <-> quad_quinn (confirmed)
   [10, 14, "It's complicated", false], // ivy_isabel -> thesis_tariq (pending)
+  // — enrichment: ensure every demo user is in >=1 relationship row (8, 11, 13
+  //   had none). Partners not already confirmed-linked elsewhere. Mix of
+  //   confirmed + pending so the confirm flow has fresh data. —
+  [8, 11, "It's complicated", true], // gamer_greg <-> photog_nate (confirmed) — covers 8 & 11
+  [13, 4, "It's complicated", false], // frat_brett -> skater_dave (pending) — covers 13
 ]
 
 // Friendships as [requesterIdx, addresseeIdx, confirmed]. ONE row per pair
@@ -583,6 +589,12 @@ const FRIENDSHIPS: [number, number, boolean][] = [
   [15, 9, true],
   [4, 14, true],
   [5, 11, true],
+  // — enrichment: lift users 10 and 13 to >=2 confirmed friends (they were thin)
+  //   and add a few more overlaps so mutual-friend counts stay non-trivial. —
+  [10, 0, true], // ivy_isabel <-> thefacebook_tom (now 10 has 2+ friends)
+  [10, 7, true], // ivy_isabel <-> bookish_mei
+  [13, 0, true], // frat_brett <-> thefacebook_tom (now 13 has 2+ friends)
+  [13, 14, true], // frat_brett <-> thesis_tariq
   // pending INCOMING to user 0 — these surface in user 0's /friends Confirm flow
   // and the header badge (addressee is 0).
   [4, 0, false], // skater_dave -> thefacebook_tom (pending)
@@ -661,12 +673,18 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12)
 
-    // Insert users, keep generated ids in author-index order.
+    // Insert users, keep generated ids in author-index order. Each user gets a
+    // famous-person avatar (256x256 JPEG, base64-embedded in ./avatars) decoded
+    // to a Buffer for the avatar BYTEA column — no runtime disk reads (per CLAUDE.md).
     const userIds: string[] = []
+    let avatarCount = 0
     for (const u of USERS) {
+      const av = DEMO_AVATARS[u.username]
+      const avatarBuf = av ? Buffer.from(av.b64, "base64") : null
+      const avatarMime = av?.mime ?? null
       const res = await client.query<{ id: string }>(
-        `INSERT INTO users (username, email, password_hash, bio, school, class_year, relationship_status, interests, courses, interested_in, looking_for)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+        `INSERT INTO users (username, email, password_hash, bio, school, class_year, relationship_status, interests, courses, interested_in, looking_for, avatar, avatar_mime)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
         [
           u.username,
           `${u.username}@demo.sml`,
@@ -679,9 +697,12 @@ export async function POST(request: Request) {
           u.courses ?? null,
           u.interestedIn ?? null,
           u.lookingFor ?? null,
+          avatarBuf,
+          avatarMime,
         ]
       )
       userIds.push(res.rows[0].id)
+      if (avatarBuf) avatarCount++
     }
 
     // Insert posts; map [authorIdx, postIdxWithinAuthor] -> post id for likes/comments.
@@ -826,6 +847,7 @@ export async function POST(request: Request) {
       ok: true,
       counts: {
         users: userIds.length,
+        avatars: avatarCount,
         posts: postCount,
         follows: followCount,
         likes: likeCount,
