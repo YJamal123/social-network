@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import type { PokeWithPoker } from "@/lib/types"
 
 export type PokeState = { error?: string }
@@ -23,12 +23,13 @@ export async function poke(targetId: string): Promise<PokeState> {
   }
 
   try {
-    await query(
-      `INSERT INTO pokes (poker_id, pokee_id) VALUES ($1, $2)
-       ON CONFLICT (poker_id, pokee_id)
-       DO UPDATE SET created_at = now(), acknowledged = false`,
-      [pokerId, targetId]
-    )
+    // Upsert: re-poking refreshes created_at and resets acknowledged. The update
+    // branch must set these explicitly — Prisma does not auto-bump created_at.
+    await getPrisma().poke.upsert({
+      where: { pokerId_pokeeId: { pokerId, pokeeId: targetId } },
+      create: { pokerId, pokeeId: targetId },
+      update: { createdAt: new Date(), acknowledged: false },
+    })
   } catch (err) {
     console.error("Poke failed:", err)
     return { error: "Failed to poke" }
@@ -48,11 +49,9 @@ export async function getUnacknowledgedPokeCount(): Promise<number> {
   }
 
   try {
-    const result = await query<{ count: number }>(
-      "SELECT COUNT(*)::int AS count FROM pokes WHERE pokee_id = $1 AND acknowledged = false",
-      [session.user.id]
-    )
-    return result.rows[0]?.count ?? 0
+    return await getPrisma().poke.count({
+      where: { pokeeId: session.user.id, acknowledged: false },
+    })
   } catch (err) {
     console.error("Count pokes failed:", err)
     return 0
@@ -75,16 +74,18 @@ export async function pokeBack(pokerId: string): Promise<PokeState> {
   }
 
   try {
-    await query(
-      `INSERT INTO pokes (poker_id, pokee_id) VALUES ($1, $2)
-       ON CONFLICT (poker_id, pokee_id)
-       DO UPDATE SET created_at = now(), acknowledged = false`,
-      [meId, pokerId]
-    )
-    await query(
-      "UPDATE pokes SET acknowledged = true WHERE poker_id = $1 AND pokee_id = $2",
-      [pokerId, meId]
-    )
+    const prisma = getPrisma()
+    await prisma.poke.upsert({
+      where: { pokerId_pokeeId: { pokerId: meId, pokeeId: pokerId } },
+      create: { pokerId: meId, pokeeId: pokerId },
+      update: { createdAt: new Date(), acknowledged: false },
+    })
+    // updateMany (not update) so a missing row is a silent no-op, matching the
+    // old UPDATE … WHERE semantics (update() would throw P2025 on no row).
+    await prisma.poke.updateMany({
+      where: { pokerId, pokeeId: meId },
+      data: { acknowledged: true },
+    })
   } catch (err) {
     console.error("Poke back failed:", err)
     return { error: "Failed to poke back" }
@@ -104,10 +105,10 @@ export async function acknowledgePokes(): Promise<PokeState> {
   }
 
   try {
-    await query(
-      "UPDATE pokes SET acknowledged = true WHERE pokee_id = $1 AND acknowledged = false",
-      [session.user.id]
-    )
+    await getPrisma().poke.updateMany({
+      where: { pokeeId: session.user.id, acknowledged: false },
+      data: { acknowledged: true },
+    })
   } catch (err) {
     console.error("Acknowledge pokes failed:", err)
     return { error: "Failed to acknowledge pokes" }
@@ -125,14 +126,11 @@ export async function getPokers(): Promise<PokeWithPoker[]> {
     return []
   }
 
-  const result = await query<PokeWithPoker>(
-    `SELECT p.poker_id, p.pokee_id, p.created_at, p.acknowledged,
-            u.username AS poker_username
-     FROM pokes p
-     JOIN users u ON u.id = p.poker_id
-     WHERE p.pokee_id = $1
-     ORDER BY p.created_at DESC`,
-    [session.user.id]
-  )
-  return result.rows
+  return getPrisma().$queryRaw<PokeWithPoker[]>`
+    SELECT p.poker_id, p.pokee_id, p.created_at, p.acknowledged,
+           u.username AS poker_username
+    FROM pokes p
+    JOIN users u ON u.id = p.poker_id
+    WHERE p.pokee_id = ${session.user.id}::uuid
+    ORDER BY p.created_at DESC`
 }

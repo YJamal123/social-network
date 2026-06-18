@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import { validateMessage } from "@/lib/validation"
 import type { ConversationSummary, MessageWithSender } from "@/lib/types"
 
@@ -32,10 +32,9 @@ export async function sendMessage(
   }
 
   try {
-    await query(
-      "INSERT INTO messages (sender_id, recipient_id, content) VALUES ($1, $2, $3)",
-      [senderId, recipientId, v.value]
-    )
+    await getPrisma().message.create({
+      data: { senderId, recipientId, content: v.value },
+    })
   } catch (err) {
     console.error("Send message failed:", err)
     return { error: "Failed to send message" }
@@ -55,11 +54,9 @@ export async function getUnreadMessageCount(): Promise<number> {
   }
 
   try {
-    const result = await query<{ count: number }>(
-      "SELECT COUNT(*)::int AS count FROM messages WHERE recipient_id = $1 AND read = false",
-      [session.user.id]
-    )
-    return result.rows[0]?.count ?? 0
+    return await getPrisma().message.count({
+      where: { recipientId: session.user.id, read: false },
+    })
   } catch (err) {
     console.error("Count unread messages failed:", err)
     return 0
@@ -76,42 +73,40 @@ export async function getConversations(): Promise<ConversationSummary[]> {
   }
 
   try {
-    const result = await query<ConversationSummary>(
-      `WITH threads AS (
-         SELECT
-           CASE WHEN m.sender_id = $1 THEN m.recipient_id ELSE m.sender_id END AS partner_id,
-           m.content, m.created_at, m.sender_id
-         FROM messages m
-         WHERE m.sender_id = $1 OR m.recipient_id = $1
-       ),
-       last_msg AS (
-         SELECT DISTINCT ON (partner_id)
-           partner_id,
-           content    AS last_content,
-           created_at,
-           sender_id  AS last_sender_id
-         FROM threads
-         ORDER BY partner_id, created_at DESC
-       ),
-       unread AS (
-         SELECT sender_id AS partner_id, COUNT(*)::int AS unread
-         FROM messages
-         WHERE recipient_id = $1 AND read = false
-         GROUP BY sender_id
-       )
-       SELECT lm.partner_id,
-              u.username AS partner_username,
-              lm.last_content,
-              lm.last_sender_id,
-              lm.created_at,
-              COALESCE(ur.unread, 0) AS unread
-       FROM last_msg lm
-       JOIN users u        ON u.id = lm.partner_id
-       LEFT JOIN unread ur ON ur.partner_id = lm.partner_id
-       ORDER BY lm.created_at DESC`,
-      [session.user.id]
-    )
-    return result.rows
+    const viewerId = session.user.id
+    return await getPrisma().$queryRaw<ConversationSummary[]>`
+      WITH threads AS (
+        SELECT
+          CASE WHEN m.sender_id = ${viewerId}::uuid THEN m.recipient_id ELSE m.sender_id END AS partner_id,
+          m.content, m.created_at, m.sender_id
+        FROM messages m
+        WHERE m.sender_id = ${viewerId}::uuid OR m.recipient_id = ${viewerId}::uuid
+      ),
+      last_msg AS (
+        SELECT DISTINCT ON (partner_id)
+          partner_id,
+          content    AS last_content,
+          created_at,
+          sender_id  AS last_sender_id
+        FROM threads
+        ORDER BY partner_id, created_at DESC
+      ),
+      unread AS (
+        SELECT sender_id AS partner_id, COUNT(*)::int AS unread
+        FROM messages
+        WHERE recipient_id = ${viewerId}::uuid AND read = false
+        GROUP BY sender_id
+      )
+      SELECT lm.partner_id,
+             u.username AS partner_username,
+             lm.last_content,
+             lm.last_sender_id,
+             lm.created_at,
+             COALESCE(ur.unread, 0) AS unread
+      FROM last_msg lm
+      JOIN users u        ON u.id = lm.partner_id
+      LEFT JOIN unread ur ON ur.partner_id = lm.partner_id
+      ORDER BY lm.created_at DESC`
   } catch (err) {
     console.error("Get conversations failed:", err)
     return []
@@ -130,26 +125,24 @@ export async function getThread(
     return { partner: null, messages: [] }
   }
 
-  const partnerRes = await query<{ id: string; username: string }>(
-    "SELECT id, username FROM users WHERE username = $1",
-    [username]
-  )
-  const partner = partnerRes.rows[0]
+  const partner = await getPrisma().user.findUnique({
+    where: { username },
+    select: { id: true, username: true },
+  })
   if (!partner) {
     return { partner: null, messages: [] }
   }
 
-  const result = await query<MessageWithSender>(
-    `SELECT m.id, m.sender_id, m.recipient_id, m.content, m.read, m.created_at,
-            u.username AS sender_username
-     FROM messages m
-     JOIN users u ON u.id = m.sender_id
-     WHERE (m.sender_id = $1 AND m.recipient_id = $2)
-        OR (m.sender_id = $2 AND m.recipient_id = $1)
-     ORDER BY m.created_at ASC`,
-    [session.user.id, partner.id]
-  )
-  return { partner, messages: result.rows }
+  const viewerId = session.user.id
+  const messages = await getPrisma().$queryRaw<MessageWithSender[]>`
+    SELECT m.id, m.sender_id, m.recipient_id, m.content, m.read, m.created_at,
+           u.username AS sender_username
+    FROM messages m
+    JOIN users u ON u.id = m.sender_id
+    WHERE (m.sender_id = ${viewerId}::uuid AND m.recipient_id = ${partner.id}::uuid)
+       OR (m.sender_id = ${partner.id}::uuid AND m.recipient_id = ${viewerId}::uuid)
+    ORDER BY m.created_at ASC`
+  return { partner, messages }
 }
 
 // Mark every message from one correspondent to the current user as read, so the
@@ -161,10 +154,10 @@ export async function markThreadRead(partnerId: string): Promise<MessageState> {
   }
 
   try {
-    await query(
-      "UPDATE messages SET read = true WHERE recipient_id = $1 AND sender_id = $2 AND read = false",
-      [session.user.id, partnerId]
-    )
+    await getPrisma().message.updateMany({
+      where: { recipientId: session.user.id, senderId: partnerId, read: false },
+      data: { read: true },
+    })
   } catch (err) {
     console.error("Mark thread read failed:", err)
     return { error: "Failed to mark read" }

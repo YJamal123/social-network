@@ -1,9 +1,8 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import { authConfig } from "@/lib/auth.config"
-import type { User } from "@/lib/types"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -14,11 +13,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const password = credentials?.password as string | undefined
         if (!email || !password) return null
 
-        const result = await query<User>("SELECT * FROM users WHERE email = $1", [email])
-        const user = result.rows[0]
+        const user = await getPrisma().user.findUnique({ where: { email } })
         if (!user) return null
 
-        const valid = await bcrypt.compare(password, user.password_hash)
+        const valid = await bcrypt.compare(password, user.passwordHash)
         if (!valid) return null
 
         return { id: user.id, name: user.username, email: user.email }

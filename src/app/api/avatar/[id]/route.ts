@@ -1,4 +1,4 @@
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 
 // Serves a user's avatar: the uploaded image if present, otherwise a generated
 // initials SVG so every Avatar can be a plain <img> with no per-call branching.
@@ -16,19 +16,15 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const result = await query<{
-      avatar: Buffer | null
-      avatar_mime: string | null
-      username: string
-    }>("SELECT avatar, avatar_mime, username FROM users WHERE id = $1", [
-      params.id,
-    ])
-    const row = result.rows[0]
+    const row = await getPrisma().user.findUnique({
+      where: { id: params.id },
+      select: { avatar: true, avatarMime: true, username: true },
+    })
 
-    if (row?.avatar && row.avatar_mime) {
+    if (row?.avatar && row.avatarMime) {
       return new Response(new Uint8Array(row.avatar), {
         headers: {
-          "Content-Type": row.avatar_mime,
+          "Content-Type": row.avatarMime,
           // Short cache so a freshly uploaded avatar shows up quickly.
           "Cache-Control": "private, max-age=10, must-revalidate",
         },

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
-import { query } from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import { validateComment, validatePostContent } from "@/lib/validation"
 import type { CommentWithAuthor } from "@/lib/types"
 
@@ -20,10 +20,9 @@ export async function createPost(content: string): Promise<PostState> {
   }
 
   try {
-    await query("INSERT INTO posts (user_id, content) VALUES ($1, $2)", [
-      session.user.id,
-      result.value,
-    ])
+    await getPrisma().post.create({
+      data: { userId: session.user.id, content: result.value },
+    })
   } catch (err) {
     console.error("Create post failed:", err)
     return { error: "Failed to publish post" }
@@ -46,20 +45,13 @@ export async function toggleLike(postId: string): Promise<LikeState> {
   const userId = session.user.id
 
   try {
-    const existing = await query(
-      "SELECT 1 FROM likes WHERE user_id = $1 AND post_id = $2",
-      [userId, postId]
-    )
-    if (existing.rowCount && existing.rowCount > 0) {
-      await query("DELETE FROM likes WHERE user_id = $1 AND post_id = $2", [
-        userId,
-        postId,
-      ])
+    const prisma = getPrisma()
+    const where = { userId_postId: { userId, postId } }
+    const existing = await prisma.like.findUnique({ where })
+    if (existing) {
+      await prisma.like.delete({ where })
     } else {
-      await query("INSERT INTO likes (user_id, post_id) VALUES ($1, $2)", [
-        userId,
-        postId,
-      ])
+      await prisma.like.create({ data: { userId, postId } })
     }
   } catch (err) {
     console.error("Toggle like failed:", err)
@@ -90,10 +82,9 @@ export async function addComment(
   }
 
   try {
-    await query(
-      "INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3)",
-      [postId, session.user.id, result.value]
-    )
+    await getPrisma().comment.create({
+      data: { postId, userId: session.user.id, content: result.value },
+    })
   } catch (err) {
     console.error("Add comment failed:", err)
     return { error: "Failed to add comment" }
@@ -114,15 +105,13 @@ export async function getComments(postId: string): Promise<CommentsResult> {
   }
 
   try {
-    const result = await query<CommentWithAuthor>(
-      `SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, u.username
-       FROM comments c
-       JOIN users u ON u.id = c.user_id
-       WHERE c.post_id = $1
-       ORDER BY c.created_at ASC`,
-      [postId]
-    )
-    return { comments: result.rows }
+    const comments = await getPrisma().$queryRaw<CommentWithAuthor[]>`
+      SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, u.username
+      FROM comments c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.post_id = ${postId}::uuid
+      ORDER BY c.created_at ASC`
+    return { comments }
   } catch (err) {
     console.error("Get comments failed:", err)
     return { error: "Failed to load comments" }

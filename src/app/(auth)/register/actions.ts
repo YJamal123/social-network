@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
-import { query } from "@/lib/db"
+import { Prisma } from "@prisma/client"
+import { getPrisma } from "@/lib/db"
 import { isValidSchool } from "@/lib/schools"
 import { isValidClassYear } from "@/lib/classYears"
 
@@ -35,12 +36,22 @@ export async function register(
   const passwordHash = await bcrypt.hash(password, 12)
 
   try {
-    await query(
-      "INSERT INTO users (username, email, password_hash, school, class_year) VALUES ($1, $2, $3, $4, $5)",
-      [username, email, passwordHash, school, classYear]
-    )
+    await getPrisma().user.create({
+      data: {
+        username,
+        email,
+        passwordHash,
+        school,
+        classYear,
+      },
+    })
   } catch (err) {
-    if ((err as { code?: string }).code === "23505") {
+    // P2002 = unique constraint violation (duplicate username/email), the Prisma
+    // equivalent of pg's 23505.
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2002"
+    ) {
       return { error: "Username or email already taken" }
     }
     console.error("Register failed:", err)

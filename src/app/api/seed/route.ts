@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import getPool from "@/lib/db"
+import { getPrisma } from "@/lib/db"
 import { DEMO_AVATARS } from "./avatars"
+
+// JS equivalent of the old `now() - ($n || ' hours')::interval` SQL — the seed
+// spread created_at over recent days. Computed in Node and passed as createdAt.
+function hoursAgoDate(hours: number): Date {
+  return new Date(Date.now() - hours * 3_600_000)
+}
 
 // One-shot, idempotent demo-data seeder. Mirrors /api/migrate: token-guarded and
 // run from inside the VPC (Cloud SQL is private-IP only, unreachable from a laptop).
@@ -664,207 +670,264 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const client = await getPool().connect()
   try {
-    await client.query("BEGIN")
-
-    // Clear prior demo data by marker; cascades to posts/follows/likes/comments.
-    await client.query("DELETE FROM users WHERE email LIKE '%@demo.sml'")
-
     const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12)
 
-    // Insert users, keep generated ids in author-index order. Each user gets a
-    // famous-person avatar (256x256 JPEG, base64-embedded in ./avatars) decoded
-    // to a Buffer for the avatar BYTEA column — no runtime disk reads (per CLAUDE.md).
-    const userIds: string[] = []
-    let avatarCount = 0
-    for (const u of USERS) {
-      const av = DEMO_AVATARS[u.username]
-      const avatarBuf = av ? Buffer.from(av.b64, "base64") : null
-      const avatarMime = av?.mime ?? null
-      const res = await client.query<{ id: string }>(
-        `INSERT INTO users (username, email, password_hash, bio, school, class_year, relationship_status, interests, courses, interested_in, looking_for, avatar, avatar_mime)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
-        [
-          u.username,
-          `${u.username}@demo.sml`,
-          passwordHash,
-          u.bio,
-          u.school,
-          u.classYear ?? null,
-          u.relationshipStatus ?? null,
-          u.interests ?? null,
-          u.courses ?? null,
-          u.interestedIn ?? null,
-          u.lookingFor ?? null,
-          avatarBuf,
-          avatarMime,
-        ]
-      )
-      userIds.push(res.rows[0].id)
-      if (avatarBuf) avatarCount++
-    }
+    // One interactive transaction so created ids can be read back and threaded
+    // into the dependent inserts (replaces the manual BEGIN/COMMIT + RETURNING).
+    // A generous timeout: the seed does a few hundred sequential writes.
+    const counts = await getPrisma().$transaction(
+      async (tx) => {
+        // Clear prior demo data by marker; FK ON DELETE CASCADE wipes their
+        // posts/follows/likes/comments/wall_posts/pokes/taunts/etc.
+        await tx.user.deleteMany({
+          where: { email: { endsWith: "@demo.sml" } },
+        })
 
-    // Insert posts; map [authorIdx, postIdxWithinAuthor] -> post id for likes/comments.
-    const postIds: Record<string, string> = {}
-    let hoursAgo = 0
-    let postCount = 0
-    for (const authorIdx of Object.keys(POSTS).map(Number)) {
-      const contents = POSTS[authorIdx]
-      for (let p = 0; p < contents.length; p++) {
-        // Spread created_at over the last ~10 days (240h), oldest first.
-        hoursAgo += 6 + ((authorIdx + p) % 5)
-        const offset = Math.min(hoursAgo, 240)
-        const res = await client.query<{ id: string }>(
-          `INSERT INTO posts (user_id, content, created_at)
-           VALUES ($1, $2, now() - ($3 || ' hours')::interval)
-           RETURNING id`,
-          [userIds[authorIdx], contents[p], offset]
-        )
-        postIds[`${authorIdx}:${p}`] = res.rows[0].id
-        postCount++
-      }
-    }
+        // Insert users, keep generated ids in author-index order. Each user gets
+        // a famous-person avatar (256x256 JPEG, base64-embedded in ./avatars)
+        // decoded to a Buffer for the avatar bytea column — no runtime disk reads.
+        const userIds: string[] = []
+        let avatarCount = 0
+        for (const u of USERS) {
+          const av = DEMO_AVATARS[u.username]
+          const avatarBuf = av ? Buffer.from(av.b64, "base64") : null
+          const avatarMime = av?.mime ?? null
+          const created = await tx.user.create({
+            data: {
+              username: u.username,
+              email: `${u.username}@demo.sml`,
+              passwordHash,
+              bio: u.bio,
+              school: u.school,
+              classYear: u.classYear ?? null,
+              relationshipStatus: u.relationshipStatus ?? null,
+              interests: u.interests ?? null,
+              courses: u.courses ?? null,
+              interestedIn: u.interestedIn ?? null,
+              lookingFor: u.lookingFor ?? null,
+              avatar: avatarBuf,
+              avatarMime,
+            },
+            select: { id: true },
+          })
+          userIds.push(created.id)
+          if (avatarBuf) avatarCount++
+        }
 
-    // Follow graph.
-    let followCount = 0
-    for (const [followerIdx, followingIdx] of FOLLOWS) {
-      await client.query(
-        `INSERT INTO follows (follower_id, following_id) VALUES ($1, $2)
-         ON CONFLICT DO NOTHING`,
-        [userIds[followerIdx], userIds[followingIdx]]
-      )
-      followCount++
-    }
+        // Posts; map [authorIdx, postIdxWithinAuthor] -> post id for likes/comments.
+        const postIds: Record<string, string> = {}
+        let hoursAgo = 0
+        let postCount = 0
+        for (const authorIdx of Object.keys(POSTS).map(Number)) {
+          const contents = POSTS[authorIdx]
+          for (let p = 0; p < contents.length; p++) {
+            // Spread created_at over the last ~10 days (240h), oldest first.
+            hoursAgo += 6 + ((authorIdx + p) % 5)
+            const offset = Math.min(hoursAgo, 240)
+            const created = await tx.post.create({
+              data: {
+                userId: userIds[authorIdx],
+                content: contents[p],
+                createdAt: hoursAgoDate(offset),
+              },
+              select: { id: true },
+            })
+            postIds[`${authorIdx}:${p}`] = created.id
+            postCount++
+          }
+        }
 
-    // Likes.
-    let likeCount = 0
-    for (const [userIdx, authorIdx, postIdx] of LIKES) {
-      const postId = postIds[`${authorIdx}:${postIdx}`]
-      if (!postId) continue
-      await client.query(
-        `INSERT INTO likes (user_id, post_id) VALUES ($1, $2)
-         ON CONFLICT DO NOTHING`,
-        [userIds[userIdx], postId]
-      )
-      likeCount++
-    }
+        // Follow graph (skipDuplicates == ON CONFLICT DO NOTHING).
+        let followCount = 0
+        for (const [followerIdx, followingIdx] of FOLLOWS) {
+          await tx.follow.upsert({
+            where: {
+              followerId_followingId: {
+                followerId: userIds[followerIdx],
+                followingId: userIds[followingIdx],
+              },
+            },
+            create: {
+              followerId: userIds[followerIdx],
+              followingId: userIds[followingIdx],
+            },
+            update: {},
+          })
+          followCount++
+        }
 
-    // Comments.
-    let commentCount = 0
-    for (const [authorIdx, postAuthorIdx, postIdx, content] of COMMENTS) {
-      const postId = postIds[`${postAuthorIdx}:${postIdx}`]
-      if (!postId) continue
-      await client.query(
-        "INSERT INTO comments (post_id, user_id, content) VALUES ($1, $2, $3)",
-        [postId, userIds[authorIdx], content]
-      )
-      commentCount++
-    }
+        // Likes.
+        let likeCount = 0
+        for (const [userIdx, authorIdx, postIdx] of LIKES) {
+          const postId = postIds[`${authorIdx}:${postIdx}`]
+          if (!postId) continue
+          await tx.like.upsert({
+            where: {
+              userId_postId: { userId: userIds[userIdx], postId },
+            },
+            create: { userId: userIds[userIdx], postId },
+            update: {},
+          })
+          likeCount++
+        }
 
-    // Wall posts (author writes on owner's wall). Spread created_at over recent days.
-    let wallPostCount = 0
-    let wallHoursAgo = 0
-    for (const [ownerIdx, authorIdx, content] of WALL_POSTS) {
-      wallHoursAgo += 5 + ((ownerIdx + authorIdx) % 4)
-      const offset = Math.min(wallHoursAgo, 240)
-      await client.query(
-        `INSERT INTO wall_posts (owner_id, author_id, content, created_at)
-         VALUES ($1, $2, $3, now() - ($4 || ' hours')::interval)`,
-        [userIds[ownerIdx], userIds[authorIdx], content, offset]
-      )
-      wallPostCount++
-    }
+        // Comments.
+        let commentCount = 0
+        for (const [authorIdx, postAuthorIdx, postIdx, content] of COMMENTS) {
+          const postId = postIds[`${postAuthorIdx}:${postIdx}`]
+          if (!postId) continue
+          await tx.comment.create({
+            data: { postId, userId: userIds[authorIdx], content },
+          })
+          commentCount++
+        }
 
-    // Pokes (some unacknowledged so the header indicator shows).
-    let pokeCount = 0
-    for (const [pokerIdx, pokeeIdx, acknowledged] of POKES) {
-      await client.query(
-        `INSERT INTO pokes (poker_id, pokee_id, acknowledged) VALUES ($1, $2, $3)
-         ON CONFLICT (poker_id, pokee_id) DO UPDATE
-           SET created_at = now(), acknowledged = EXCLUDED.acknowledged`,
-        [userIds[pokerIdx], userIds[pokeeIdx], acknowledged]
-      )
-      pokeCount++
-    }
+        // Wall posts (author writes on owner's wall). Spread over recent days.
+        let wallPostCount = 0
+        let wallHoursAgo = 0
+        for (const [ownerIdx, authorIdx, content] of WALL_POSTS) {
+          wallHoursAgo += 5 + ((ownerIdx + authorIdx) % 4)
+          const offset = Math.min(wallHoursAgo, 240)
+          await tx.wallPost.create({
+            data: {
+              ownerId: userIds[ownerIdx],
+              authorId: userIds[authorIdx],
+              content,
+              createdAt: hoursAgoDate(offset),
+            },
+          })
+          wallPostCount++
+        }
 
-    // Taunts (cross-school; some unacknowledged so the header indicator shows).
-    let tauntCount = 0
-    for (const [taunterIdx, taunteeIdx, acknowledged] of TAUNTS) {
-      await client.query(
-        `INSERT INTO taunts (taunter_id, tauntee_id, acknowledged) VALUES ($1, $2, $3)
-         ON CONFLICT (taunter_id, tauntee_id) DO UPDATE
-           SET created_at = now(), acknowledged = EXCLUDED.acknowledged`,
-        [userIds[taunterIdx], userIds[taunteeIdx], acknowledged]
-      )
-      tauntCount++
-    }
+        // Pokes (some unacknowledged so the header indicator shows).
+        let pokeCount = 0
+        for (const [pokerIdx, pokeeIdx, acknowledged] of POKES) {
+          await tx.poke.upsert({
+            where: {
+              pokerId_pokeeId: {
+                pokerId: userIds[pokerIdx],
+                pokeeId: userIds[pokeeIdx],
+              },
+            },
+            create: {
+              pokerId: userIds[pokerIdx],
+              pokeeId: userIds[pokeeIdx],
+              acknowledged,
+            },
+            update: { createdAt: new Date(), acknowledged },
+          })
+          pokeCount++
+        }
 
-    // Relationships (linked partners; a couple confirmed, one pending).
-    let relationshipCount = 0
-    for (const [requesterIdx, addresseeIdx, status, confirmed] of RELATIONSHIPS) {
-      await client.query(
-        `INSERT INTO relationships (requester_id, addressee_id, status, confirmed) VALUES ($1, $2, $3, $4)
-         ON CONFLICT (requester_id, addressee_id) DO UPDATE
-           SET status = EXCLUDED.status, confirmed = EXCLUDED.confirmed, created_at = now()`,
-        [userIds[requesterIdx], userIds[addresseeIdx], status, confirmed]
-      )
-      relationshipCount++
-    }
+        // Taunts (cross-school; some unacknowledged).
+        let tauntCount = 0
+        for (const [taunterIdx, taunteeIdx, acknowledged] of TAUNTS) {
+          await tx.taunt.upsert({
+            where: {
+              taunterId_taunteeId: {
+                taunterId: userIds[taunterIdx],
+                taunteeId: userIds[taunteeIdx],
+              },
+            },
+            create: {
+              taunterId: userIds[taunterIdx],
+              taunteeId: userIds[taunteeIdx],
+              acknowledged,
+            },
+            update: { createdAt: new Date(), acknowledged },
+          })
+          tauntCount++
+        }
 
-    // Friendships (symmetric; a dense confirmed web + a couple pending incoming
-    // to user 0). Self-pairs are impossible here (table CHECK enforces it too).
-    let friendshipCount = 0
-    for (const [requesterIdx, addresseeIdx, confirmed] of FRIENDSHIPS) {
-      if (requesterIdx === addresseeIdx) continue // guard: never self-friend
-      await client.query(
-        `INSERT INTO friendships (requester_id, addressee_id, confirmed) VALUES ($1, $2, $3)
-         ON CONFLICT (requester_id, addressee_id) DO UPDATE
-           SET confirmed = EXCLUDED.confirmed, created_at = now()`,
-        [userIds[requesterIdx], userIds[addresseeIdx], confirmed]
-      )
-      friendshipCount++
-    }
+        // Relationships (linked partners; a couple confirmed, one pending).
+        let relationshipCount = 0
+        for (const [
+          requesterIdx,
+          addresseeIdx,
+          status,
+          confirmed,
+        ] of RELATIONSHIPS) {
+          await tx.relationship.upsert({
+            where: {
+              requesterId_addresseeId: {
+                requesterId: userIds[requesterIdx],
+                addresseeId: userIds[addresseeIdx],
+              },
+            },
+            create: {
+              requesterId: userIds[requesterIdx],
+              addresseeId: userIds[addresseeIdx],
+              status,
+              confirmed,
+            },
+            update: { status, confirmed, createdAt: new Date() },
+          })
+          relationshipCount++
+        }
 
-    // Messages (private 1:1 DMs; some unread so the header indicator shows).
-    // Spread created_at over recent days so threads sort believably.
-    let messageCount = 0
-    let messageHoursAgo = 0
-    for (const [senderIdx, recipientIdx, content, read] of MESSAGES) {
-      messageHoursAgo += 4 + ((senderIdx + recipientIdx) % 5)
-      const offset = Math.min(messageHoursAgo, 240)
-      await client.query(
-        `INSERT INTO messages (sender_id, recipient_id, content, read, created_at)
-         VALUES ($1, $2, $3, $4, now() - ($5 || ' hours')::interval)`,
-        [userIds[senderIdx], userIds[recipientIdx], content, read, offset]
-      )
-      messageCount++
-    }
+        // Friendships (symmetric; dense confirmed web + a couple pending incoming
+        // to user 0). Self-pairs are impossible here (table CHECK enforces it too).
+        let friendshipCount = 0
+        for (const [requesterIdx, addresseeIdx, confirmed] of FRIENDSHIPS) {
+          if (requesterIdx === addresseeIdx) continue // guard: never self-friend
+          await tx.friendship.upsert({
+            where: {
+              requesterId_addresseeId: {
+                requesterId: userIds[requesterIdx],
+                addresseeId: userIds[addresseeIdx],
+              },
+            },
+            create: {
+              requesterId: userIds[requesterIdx],
+              addresseeId: userIds[addresseeIdx],
+              confirmed,
+            },
+            update: { confirmed, createdAt: new Date() },
+          })
+          friendshipCount++
+        }
 
-    await client.query("COMMIT")
+        // Messages (private 1:1 DMs; some unread so the header indicator shows).
+        // Spread created_at over recent days so threads sort believably.
+        let messageCount = 0
+        let messageHoursAgo = 0
+        for (const [senderIdx, recipientIdx, content, read] of MESSAGES) {
+          messageHoursAgo += 4 + ((senderIdx + recipientIdx) % 5)
+          const offset = Math.min(messageHoursAgo, 240)
+          await tx.message.create({
+            data: {
+              senderId: userIds[senderIdx],
+              recipientId: userIds[recipientIdx],
+              content,
+              read,
+              createdAt: hoursAgoDate(offset),
+            },
+          })
+          messageCount++
+        }
 
-    return NextResponse.json({
-      ok: true,
-      counts: {
-        users: userIds.length,
-        avatars: avatarCount,
-        posts: postCount,
-        follows: followCount,
-        likes: likeCount,
-        comments: commentCount,
-        wallPosts: wallPostCount,
-        pokes: pokeCount,
-        taunts: tauntCount,
-        relationships: relationshipCount,
-        friendships: friendshipCount,
-        messages: messageCount,
+        return {
+          users: userIds.length,
+          avatars: avatarCount,
+          posts: postCount,
+          follows: followCount,
+          likes: likeCount,
+          comments: commentCount,
+          wallPosts: wallPostCount,
+          pokes: pokeCount,
+          taunts: tauntCount,
+          relationships: relationshipCount,
+          friendships: friendshipCount,
+          messages: messageCount,
+        }
       },
-    })
+      { maxWait: 15_000, timeout: 120_000 }
+    )
+
+    return NextResponse.json({ ok: true, counts })
   } catch (err) {
-    await client.query("ROLLBACK")
     console.error("Seed failed:", err)
     return NextResponse.json({ ok: false, error: "Seed failed" }, { status: 500 })
-  } finally {
-    client.release()
   }
 }
