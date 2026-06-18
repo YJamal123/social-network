@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react"
 import { useFormState } from "react-dom"
-import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { onboard } from "./actions"
 import { buttonClass, fieldClass } from "@/lib/ui"
@@ -10,13 +9,22 @@ import { SCHOOLS } from "@/lib/schools"
 import { CLASS_YEARS } from "@/lib/classYears"
 
 export default function OnboardingPage() {
-  const router = useRouter()
   const { update } = useSession()
   const [state, formAction] = useFormState(onboard, {})
 
   // On success: refresh the JWT (flips token.onboarded → true via the Node jwt
   // "update" branch) BEFORE navigating, so the authorized callback lets us into
   // /feed instead of looping back to /onboarding.
+  //
+  // IMPORTANT: call update() WITH a defined arg. In next-auth v5 beta, no-arg
+  // update() issues a GET /api/auth/session, which does NOT set trigger:"update"
+  // in the jwt callback — so the DB re-read never runs and the cookie is
+  // re-signed with the stale onboarded:false, looping us back here. A
+  // defined-arg update(...) issues a POST → trigger:"update" → DB re-read →
+  // cookie re-signed onboarded:true. (The object content is ignored; the jwt
+  // callback re-reads onboardedAt from the DB.) Then a HARD navigation
+  // (window.location.assign) guarantees the edge middleware sees the fresh
+  // cookie and sidesteps the client-side "loading" no-op race.
   //
   // One-shot guard: `update` from useSession() gets a NEW identity on every
   // render, and calling update() refetches the session → re-render → new
@@ -27,9 +35,11 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (state.ok && !navigatedRef.current) {
       navigatedRef.current = true
-      void update().then(() => router.push("/feed"))
+      void update({ onboarded: true }).then(() => {
+        window.location.assign("/feed")
+      })
     }
-  }, [state.ok, update, router])
+  }, [state.ok, update])
 
   return (
     <main className="flex min-h-screen items-center justify-center p-4">
