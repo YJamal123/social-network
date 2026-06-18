@@ -3,6 +3,12 @@
 _Last updated: 2026-06-18, before an Auth0 implementation run that was NOT started._
 
 ## TL;DR for picking back up
+- **Independent verification pair run 2026-06-18: Prisma = PASS, Auth0 = PASS-WITH-NOTES.**
+  Reports: `prisma-verify-report.md`, `auth0-verify-report.md`. Gates green on both
+  (tsc clean, 64/64 tests, DB-less build). Live credentials login re-verified working.
+  No open security findings. Only non-blocking notes: pin `connection_limit=5` (LOW);
+  the auth0_sub unique index is full not partial (benign on PG15). Remaining work is
+  human-only: 2 Auth0-dashboard toggles + a browser test of Google sign-in.
 - **Prisma ORM migration: DONE & DEPLOYED & VERIFIED.**
 - **Auth0 migration: DONE & DEPLOYED & VERIFIED** (2026-06-18). NextAuth v5 +
   Auth0 OIDC provider with the bcrypt credentials fallback retained; `/onboarding`
