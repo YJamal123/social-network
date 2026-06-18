@@ -94,6 +94,17 @@ CREATE TABLE IF NOT EXISTS relationships (
 
 CREATE INDEX IF NOT EXISTS relationships_addressee_id_idx ON relationships(addressee_id);
 
+CREATE TABLE IF NOT EXISTS friendships (
+  requester_id UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  addressee_id UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  confirmed    BOOLEAN     NOT NULL DEFAULT false,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (requester_id, addressee_id),
+  CHECK (requester_id <> addressee_id)
+);
+
+CREATE INDEX IF NOT EXISTS friendships_addressee_id_idx ON friendships(addressee_id);
+
 CREATE TABLE IF NOT EXISTS messages (
   id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   sender_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,

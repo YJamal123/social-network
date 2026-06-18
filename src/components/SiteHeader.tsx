@@ -3,6 +3,7 @@ import { auth, signOut } from "@/lib/auth"
 import { getUnacknowledgedPokeCount } from "@/app/(main)/pokes/actions"
 import { getUnacknowledgedTauntCount } from "@/app/(main)/taunts/actions"
 import { getPendingRelationshipRequestCount } from "@/app/(main)/profile/actions"
+import { getPendingFriendRequestCount } from "@/app/(main)/friends/actions"
 import { getUnreadMessageCount } from "@/app/(main)/messages/actions"
 
 // Masthead for all (main) routes: solid navy bar, bracketed [ sml ] wordmark,
@@ -16,6 +17,7 @@ export async function SiteHeader() {
   const relationshipCount = username
     ? await getPendingRelationshipRequestCount()
     : 0
+  const friendCount = username ? await getPendingFriendRequestCount() : 0
   const messageCount = username ? await getUnreadMessageCount() : 0
 
   return (
@@ -32,6 +34,22 @@ export async function SiteHeader() {
             <span className="opacity-50">·</span>
             <Link href="/directory" className="opacity-90 hover:underline hover:opacity-100">
               directory
+            </Link>
+            <span className="opacity-50">·</span>
+            <Link
+              href="/friends"
+              className="flex items-center gap-1 opacity-90 hover:underline hover:opacity-100"
+            >
+              friends
+              {friendCount > 0 && (
+                <span
+                  aria-label={`${friendCount} pending friend requests`}
+                  aria-live="polite"
+                  className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
+                >
+                  {friendCount}
+                </span>
+              )}
             </Link>
             <span className="opacity-50">·</span>
             <Link
@@ -140,6 +158,21 @@ export async function SiteHeader() {
         </Link>
         <Link href="/directory" className="opacity-90 hover:underline hover:opacity-100">
           directory
+        </Link>
+        <Link
+          href="/friends"
+          className="flex items-center gap-1 opacity-90 hover:underline hover:opacity-100"
+        >
+          friends
+          {friendCount > 0 && (
+            <span
+              aria-label={`${friendCount} pending friend requests`}
+              aria-live="polite"
+              className="inline-flex min-w-badge items-center justify-center rounded-full bg-coral px-1 text-body-sm font-bold text-white"
+            >
+              {friendCount}
+            </span>
+          )}
         </Link>
         <Link
           href="/pokes"

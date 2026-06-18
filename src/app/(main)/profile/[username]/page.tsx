@@ -5,6 +5,7 @@ import { query } from "@/lib/db"
 import { fetchPosts } from "@/lib/queries"
 import { PostCard } from "@/components/PostCard"
 import { FollowButton } from "@/components/FollowButton"
+import { FriendButton } from "@/components/FriendButton"
 import { PokeButton } from "@/components/PokeButton"
 import { TauntButton } from "@/components/TauntButton"
 import { WallComposer } from "@/components/WallComposer"
@@ -13,6 +14,7 @@ import { Avatar } from "@/components/Avatar"
 import { EmptyState } from "@/components/EmptyState"
 import { UserNameTime } from "@/components/UserNameTime"
 import { getWallPosts } from "@/app/(main)/profile/actions"
+import { getFriendshipState } from "@/app/(main)/friends/actions"
 import { buttonClass } from "@/lib/ui"
 import type { PostWithAuthor, ProfileUser } from "@/lib/types"
 
@@ -124,6 +126,10 @@ export default async function ProfilePage({
     viewerSchool && profile.school && viewerSchool !== profile.school
   )
   const confirmedPartner = await getConfirmedPartner(profile.id)
+  const friendshipState =
+    session?.user?.id && !isOwnProfile
+      ? await getFriendshipState(session.user.id, profile.id)
+      : "none"
   const posts = await getUserPosts(profile.id, session?.user?.id ?? null)
   const wallPosts = await getWallPosts(profile.id)
 
@@ -169,10 +175,14 @@ export default async function ProfilePage({
                   Following
                 </div>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <FollowButton
                   targetUserId={profile.id}
                   initialFollowing={following}
+                />
+                <FriendButton
+                  targetUserId={profile.id}
+                  initialState={friendshipState}
                 />
                 {canTaunt ? (
                   <TauntButton targetUserId={profile.id} />

@@ -106,6 +106,29 @@ export interface RelationshipWithPartner extends Relationship {
   partner_username: string
 }
 
+// A friendship edge between two users (one row per pair, mutual-confirm).
+// confirmed=true is a symmetric edge in BOTH directions.
+export interface Friendship {
+  requester_id: string
+  addressee_id: string
+  confirmed: boolean
+  created_at: string
+}
+
+// A friendship joined with the OTHER user's username + id (the side that isn't
+// the viewer) — used in the /friends list and pending-request surface.
+export interface FriendshipWithUser extends Friendship {
+  user_id: string
+  username: string
+}
+
+// The viewer's friendship relationship to another user, from the viewer's POV.
+export type FriendshipState =
+  | "none"
+  | "pending_out"
+  | "pending_in"
+  | "friends"
+
 // A private 1:1 direct message
 export interface Message {
   id: string
