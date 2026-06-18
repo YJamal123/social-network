@@ -21,7 +21,8 @@ import type { PostWithAuthor, ProfileUser } from "@/lib/types"
 async function getProfile(username: string): Promise<ProfileUser | null> {
   const result = await query<ProfileUser>(
     `SELECT u.id, u.username, u.bio, u.relationship_status, u.interests,
-            u.courses, u.school, u.interested_in, u.looking_for, u.created_at,
+            u.courses, u.school, u.interested_in, u.looking_for, u.class_year,
+            u.created_at,
             (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count,
             (SELECT COUNT(*)::int FROM follows f WHERE f.following_id = u.id) AS follower_count,
             (SELECT COUNT(*)::int FROM follows f WHERE f.follower_id = u.id) AS following_count
@@ -139,6 +140,7 @@ export default async function ProfilePage({
   })
   const hasExtra =
     profile.school ||
+    profile.class_year ||
     confirmedPartner ||
     profile.relationship_status ||
     profile.interests ||
@@ -247,6 +249,12 @@ export default async function ProfilePage({
               <dl className="grid grid-cols-3 gap-2">
                 {profile.school && (
                   <InfoRow label="School" value={profile.school} />
+                )}
+                {profile.class_year && (
+                  <InfoRow
+                    label="Class"
+                    value={`Class of ${profile.class_year}`}
+                  />
                 )}
                 {confirmedPartner && (
                   <>

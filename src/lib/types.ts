@@ -10,6 +10,7 @@ export interface User {
   school: string | null
   interested_in: string | null
   looking_for: string | null
+  class_year: number | null
   created_at: string
 }
 
@@ -180,6 +181,7 @@ export interface ProfileUser {
   school: string | null
   interested_in: string | null
   looking_for: string | null
+  class_year: number | null
   created_at: string
   post_count: number
   follower_count: number

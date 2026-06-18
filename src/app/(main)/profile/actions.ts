@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth"
 import { query } from "@/lib/db"
 import { validatePostContent } from "@/lib/validation"
 import { isValidSchool } from "@/lib/schools"
+import { isValidClassYear } from "@/lib/classYears"
 import { isValidRelationshipStatus } from "@/lib/relationships"
 import {
   INTERESTED_IN,
@@ -61,6 +62,17 @@ export async function updateProfile(
     return { error: "Please select a valid school" }
   }
 
+  // Class year is optional — empty clears it. When present it must be valid.
+  const classYearRaw = ((formData.get("class_year") as string) ?? "").trim()
+  let classYear: number | null = null
+  if (classYearRaw) {
+    const parsed = Number(classYearRaw)
+    if (!isValidClassYear(parsed)) {
+      return { error: "Please select a valid class year" }
+    }
+    classYear = parsed
+  }
+
   // Checkbox groups — sanitize against the server-side whitelist, comma-joined.
   const interestedIn = sanitizeSelections(
     formData.getAll("interested_in"),
@@ -80,8 +92,9 @@ export async function updateProfile(
               courses = $4,
               school = $5,
               interested_in = $6,
-              looking_for = $7
-        WHERE id = $8`,
+              looking_for = $7,
+              class_year = $8
+        WHERE id = $9`,
       [
         bio || null,
         relationshipStatus || null,
@@ -90,6 +103,7 @@ export async function updateProfile(
         school,
         interestedIn || null,
         lookingFor || null,
+        classYear,
         session.user.id,
       ]
     )

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { register } from "./actions"
 import { buttonClass, fieldClass } from "@/lib/ui"
 import { SCHOOLS } from "@/lib/schools"
+import { CLASS_YEARS } from "@/lib/classYears"
 
 export default function RegisterPage() {
   const [state, formAction] = useFormState(register, {})
@@ -53,6 +54,16 @@ export default function RegisterPage() {
             {SCHOOLS.map((school) => (
               <option key={school} value={school}>
                 {school}
+              </option>
+            ))}
+          </select>
+          <select name="class_year" required defaultValue="" className={fieldClass}>
+            <option value="" disabled>
+              Select your class year
+            </option>
+            {CLASS_YEARS.map((year) => (
+              <option key={year} value={year}>
+                Class of {year}
               </option>
             ))}
           </select>

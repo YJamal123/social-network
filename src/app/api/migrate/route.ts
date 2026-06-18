@@ -126,6 +126,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_mime TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS school TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS interested_in TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS looking_for TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS class_year INT;
 `
 
 export async function POST(request: Request) {

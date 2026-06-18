@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 import { query } from "@/lib/db"
 import { isValidSchool } from "@/lib/schools"
+import { isValidClassYear } from "@/lib/classYears"
 
 export type RegisterState = { error?: string }
 
@@ -15,8 +16,9 @@ export async function register(
   const email = (formData.get("email") as string)?.trim().toLowerCase()
   const password = formData.get("password") as string
   const school = (formData.get("school") as string)?.trim()
+  const classYearRaw = (formData.get("class_year") as string)?.trim()
 
-  if (!username || !email || !password || !school) {
+  if (!username || !email || !password || !school || !classYearRaw) {
     return { error: "All fields are required" }
   }
   if (password.length < 6) {
@@ -25,13 +27,17 @@ export async function register(
   if (!isValidSchool(school)) {
     return { error: "Please choose a valid school" }
   }
+  const classYear = Number(classYearRaw)
+  if (!isValidClassYear(classYear)) {
+    return { error: "Please choose a valid class year" }
+  }
 
   const passwordHash = await bcrypt.hash(password, 12)
 
   try {
     await query(
-      "INSERT INTO users (username, email, password_hash, school) VALUES ($1, $2, $3, $4)",
-      [username, email, passwordHash, school]
+      "INSERT INTO users (username, email, password_hash, school, class_year) VALUES ($1, $2, $3, $4, $5)",
+      [username, email, passwordHash, school, classYear]
     )
   } catch (err) {
     if ((err as { code?: string }).code === "23505") {

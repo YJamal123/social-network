@@ -7,6 +7,7 @@ import { Panel } from "@/components/Panel"
 import { RelationshipProposer } from "@/components/RelationshipProposer"
 import { fieldClass } from "@/lib/ui"
 import { SCHOOLS } from "@/lib/schools"
+import { CLASS_YEARS } from "@/lib/classYears"
 import {
   INTERESTED_IN,
   LOOKING_FOR,
@@ -64,6 +65,7 @@ export function ProfileEditForm({
   initialSchool,
   initialInterestedIn,
   initialLookingFor,
+  initialClassYear,
 }: {
   username: string
   initialBio: string
@@ -73,6 +75,7 @@ export function ProfileEditForm({
   initialSchool: string
   initialInterestedIn: string
   initialLookingFor: string
+  initialClassYear: number | null
 }) {
   const [state, formAction] = useFormState(updateProfile, {})
   const interestedIn = parseSelections(initialInterestedIn)
@@ -113,6 +116,22 @@ export function ProfileEditForm({
             {SCHOOLS.map((school) => (
               <option key={school} value={school}>
                 {school}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className={labelClass}>
+          Class year
+          <select
+            name="class_year"
+            defaultValue={initialClassYear ?? ""}
+            className={`${fieldClass} mt-1`}
+          >
+            <option value="">Not specified</option>
+            {CLASS_YEARS.map((year) => (
+              <option key={year} value={year}>
+                Class of {year}
               </option>
             ))}
           </select>
