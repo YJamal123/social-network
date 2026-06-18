@@ -4,7 +4,13 @@ _Last updated: 2026-06-18, before an Auth0 implementation run that was NOT start
 
 ## TL;DR for picking back up
 - **Prisma ORM migration: DONE & DEPLOYED & VERIFIED.**
-- **Auth0 migration: NOT STARTED** (the implementation agent was about to launch but was halted; it did zero work — no Auth0 code exists yet).
+- **Auth0 migration: DONE & DEPLOYED & VERIFIED** (2026-06-18). NextAuth v5 +
+  Auth0 OIDC provider with the bcrypt credentials fallback retained; `/onboarding`
+  gate; `auth0_columns` migration applied in prod; rev `mdjamal-app-00027-58z` at
+  100% traffic. Full report: `auth0-impl-progress.md`. Remaining: 2 manual
+  Auth0-dashboard toggles (enable Google + DB connection) and a browser test of
+  Google end-to-end — see that report. Credentials login (`@demo.sml`/`demo1234`)
+  verified still working live.
 - All work lives on local branch **`feat/v2-prisma-auth0`** — **NOT pushed to GitHub.**
 
 ## Git state
