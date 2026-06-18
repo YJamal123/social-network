@@ -14,7 +14,7 @@ A minimal social network (Facebook 2004 era) built for a timed technical intervi
 | Language | TypeScript |
 | Styling | Tailwind CSS |
 | Database | Cloud SQL — PostgreSQL 15 |
-| DB client | `pg` (node-postgres) with raw SQL — no ORM |
+| DB client | Prisma ORM (typed client for mutations; `prisma.$queryRaw` for the complex reads) |
 | Auth | NextAuth.js v5 (credentials provider) — JWT sessions |
 | Compute | Cloud Run (containerized via Dockerfile) |
 | Container registry | Artifact Registry (`us-central1`) |
@@ -51,7 +51,7 @@ src/
     PostForm.tsx
     UserAvatar.tsx
   lib/
-    db.ts                     # Pool singleton (reads DATABASE_URL from env)
+    db.ts                     # PrismaClient singleton (lazy getPrisma()/prisma, reads DATABASE_URL from env)
     auth.ts                   # NextAuth config
     types.ts
   middleware.ts               # Protect (main) routes
@@ -59,10 +59,10 @@ src/
 
 ## Coding Standards
 
-- **No ORM.** Use raw SQL via `pg`. The authoritative schema is the inlined `SCHEMA` string in `src/app/api/migrate/route.ts` (idempotent, applied via the migrate route); `schema.sql` at root is a stale reference copy.
+- **Prisma ORM.** The authoritative data model is `prisma/schema.prisma`; migrations live in `prisma/migrations/` and are applied with `prisma migrate deploy` run by a **Cloud Run Job inside the VPC** (Cloud SQL is private-IP only). Use the typed Prisma client for mutations (upserts/creates/deletes); the few expressive reads (`fetchPosts`, the directory search, the profile/conversation aggregates) MAY stay `prisma.$queryRaw` (still goes through the Prisma engine — no `pg` Pool). The old `/api/migrate` SCHEMA string has been retired. `schema.sql` at root was deleted (it was stale).
 - **Server Actions** for mutations (post creation, profile update). Route Handlers for read APIs.
 - **Mutations return `{ error?: string }`, they don't throw** (except `redirect()`). Client components surface the error inline and only reset/clear on success. See `register` and `createPost`. The one exception: `redirect()` must throw, so call it after the try/catch.
-- **One DB pool.** `src/lib/db.ts` exports a single `Pool` — never instantiate `Pool` elsewhere.
+- **One DB client.** `src/lib/db.ts` exports a single lazy `PrismaClient` (via `getPrisma()` / the `prisma` proxy) — never instantiate `PrismaClient` (or a `pg` Pool) elsewhere.
 - **Env vars only through `process.env`.** Never import dotenv in production code — Next.js handles it.
 - **Error handling:** always return typed error responses `{ error: string }` with correct HTTP status.
 - **Tailwind only** for styling — no inline `style={}` props.
@@ -70,9 +70,13 @@ src/
 
 ## Database Schema
 
-Authoritative schema is the `SCHEMA` string in `src/app/api/migrate/route.ts` (idempotent:
-`CREATE TABLE IF NOT EXISTS` / `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`), applied post-deploy
-via `curl -X POST ".../api/migrate?token=$NEXTAUTH_SECRET"`. Current tables:
+Authoritative schema is `prisma/schema.prisma` (models + native `@db.*` types + composite
+`@@id`s + named relations). Migrations are version-controlled under `prisma/migrations/` and
+applied with `prisma migrate deploy` run by the **`mdjamal-migrate` Cloud Run Job** inside the
+VPC (Cloud SQL is private-IP only). The first migration `0_init` was **baselined**
+(`prisma migrate resolve --applied 0_init`) against the existing prod DB so it was marked
+applied without re-running DDL — demo data untouched. `CHECK` constraints (Prisma can't model
+them) are hand-appended as raw SQL inside `0_init/migration.sql`. Current tables:
 
 - **users** — `id, username, email, password_hash, bio, created_at` plus added columns:
   `relationship_status, interests, courses, school, interested_in, looking_for, avatar (BYTEA), avatar_mime`
@@ -100,9 +104,11 @@ These are **never in the repo**. Set in Secret Manager and wired to Cloud Run.
 
 ## Gotchas (learned the hard way)
 
-- **`db.ts` must lazy-init the Pool.** The `DATABASE_URL` check and `new Pool()` happen on first `query()` call, NOT at module import. A module-level throw fails `next build`, which imports route modules without a live DB.
-- **Schema is applied via `/api/migrate`, not a local `psql`.** The Cloud SQL instance is private-IP only (org policy blocks public IP), so it's unreachable from a laptop. The migrate route inlines the core SQL (the standalone Docker bundle doesn't ship root files like `schema.sql`, so a disk read would break in prod). Hit it once post-deploy from inside the VPC: `curl -X POST "https://<url>/api/migrate?token=$NEXTAUTH_SECRET"`.
-- **NextAuth v5 needs a split config.** `auth.config.ts` is edge-safe (callbacks, session strategy, `authorized` route-protection logic) and is the ONLY thing `middleware.ts` imports — it must never pull in `pg` or `bcrypt`, which can't run on the edge runtime. The pg/bcrypt-backed `authorize` lives only in `auth.ts`. If the middleware bundle balloons or build complains about Node APIs at the edge, something Node-only leaked into `auth.config.ts`.
+- **`db.ts` must lazy-init the PrismaClient.** The `DATABASE_URL` check happens in `getPrisma()` on first use, NOT at module import. `new PrismaClient()` does not connect at construction (it connects on first query), but importing `@prisma/client` requires the generated client to exist — so `prisma generate` must run before `tsc` and `next build`. A module-level throw would fail `next build`, which imports route modules without a live DB.
+- **`prisma generate` must run before `tsc`/`next build`.** CI runs `npx tsc --noEmit` right after `npm ci`; without a generated client `@prisma/client` exports no model types and `tsc` fails. The `"postinstall": "prisma generate"` script (runs at the end of every `npm ci`) and `"build": "prisma generate && next build"` cover this. `postinstall` requires `prisma/schema.prisma` to exist — keep it committed.
+- **Prisma engine on Alpine/musl.** The runtime image is `node:20-alpine` (musl + OpenSSL 3), so `schema.prisma` sets `binaryTargets = ["native", "linux-musl-openssl-3.0.x"]`. The standalone Next bundle can drop the native engine binary, so `next.config.mjs` adds `experimental.outputFileTracingIncludes` for `node_modules/.prisma/client/*` AND the Dockerfile runner stage `COPY`s `node_modules/.prisma` + `@prisma/client`. If you see "Query engine binary for current platform could not be found" at runtime, this is why.
+- **Schema is applied by the `mdjamal-migrate` Cloud Run Job, not a local `psql` or `/api/migrate`.** Cloud SQL is private-IP only (org policy blocks public IP), unreachable from a laptop. The Job runs `prisma migrate deploy` inside the VPC with the Cloud SQL instance attached (`--add-cloudsql-instances`) and its runtime SA holding `roles/cloudsql.client`. `migrate deploy` is idempotent (skips applied migrations) and takes a Postgres advisory lock for the duration. Run it post-deploy: `gcloud run jobs execute mdjamal-migrate --wait --region=us-central1 --project=sml-interview-sandbox`. `/api/seed` is still an HTTP token-guarded route (now using Prisma).
+- **NextAuth v5 needs a split config.** `auth.config.ts` is edge-safe (callbacks, session strategy, `authorized` route-protection logic) and is the ONLY thing `middleware.ts` imports — it must never pull in Prisma (`@prisma/client`) or `bcrypt`, which can't run on the edge runtime. The Prisma/bcrypt-backed `authorize` lives only in `auth.ts`. If the middleware bundle balloons or build complains about Node APIs at the edge, something Node-only leaked into `auth.config.ts`.
 - **`authorize()` returns `null` on failure, never throws.** Throwing yields a 500 instead of a graceful "invalid credentials". Login form calls `signIn(..., { redirect: false })` and handles the error in the UI.
 - **`redirect()` must live outside try/catch.** Next's `redirect()` works by throwing — a surrounding catch swallows it. Same applies to server actions (see register action).
 - **`secret`/`trustHost` set explicitly in config.** v5 defaults to `AUTH_SECRET`, but our Secret Manager value mounts as `NEXTAUTH_SECRET`, so `auth.config.ts` passes `secret: process.env.NEXTAUTH_SECRET` and `trustHost: true` (required behind Cloud Run's proxy).
@@ -123,6 +129,6 @@ These are **never in the repo**. Set in Secret Manager and wired to Cloud Run.
 - **GCP only.** No Vercel, Netlify, Render, AWS, or Azure.
 - **No separate backend.** Everything runs inside the Next.js app — no Express, Fastify, or separate API service.
 - **No Firestore.** This project uses Cloud SQL (PostgreSQL) exclusively.
-- **No ORM.** No Prisma, Drizzle, TypeORM. Raw `pg` only.
+- **Prisma is the ORM — do not add a second one.** No Drizzle, TypeORM, etc., and do not reintroduce a raw `pg` Pool. (`prisma.$queryRaw` for expressive reads is fine — it runs through the Prisma engine.)
 - **No `npm audit fix --force`.** It breaks peer dependencies silently.
 - **No `process.env` without fallback validation** at startup — crash loudly if `DATABASE_URL` is missing.

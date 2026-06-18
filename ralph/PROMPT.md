@@ -15,9 +15,9 @@ update the progress file, then exit.
 ## Hard rules — do not violate
 - **Local only.** NEVER run `gcloud`/`docker`/deploy. NEVER `git push`. Local commits only.
 - **Do not touch the proxy hacks** in `next.config.mjs` (`allowedOrigins`, `bodySizeLimit`).
-- **Raw `pg` only, no ORM.** New schema lands ONLY in the idempotent `src/app/api/migrate/route.ts` (`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`).
+- **Prisma ORM.** The data model lives in `prisma/schema.prisma`; new schema = a new Prisma migration under `prisma/migrations/` (authored with `prisma migrate dev` against a throwaway DB), applied in prod by the `mdjamal-migrate` Cloud Run Job (`prisma migrate deploy`). Use the typed Prisma client for mutations; `prisma.$queryRaw` is allowed for expressive reads. The old `/api/migrate` SCHEMA string is retired.
 - **Mutations = Server Actions returning `{ error?: string }`, never throw** (except `redirect()` outside try/catch). Self-targeting actions no-op or reject (mirror poke/follow).
-- **One Pool** via `query()` from `src/lib/db.ts`. **No `any`** — all shapes in `src/lib/types.ts`. **Tailwind only**, no inline `style`, no raw hex; reuse `fieldClass`/`buttonClass` from `src/lib/ui.ts` and existing primitives (`Avatar`, `UserRow`, `Panel`, `EmptyState`, `UserNameTime`).
+- **One PrismaClient** via `getPrisma()`/`prisma` from `src/lib/db.ts` (never instantiate `PrismaClient`/`pg` elsewhere). **No `any`** — all shapes in `src/lib/types.ts`. **Tailwind only**, no inline `style`, no raw hex; reuse `fieldClass`/`buttonClass` from `src/lib/ui.ts` and existing primitives (`Avatar`, `UserRow`, `Panel`, `EmptyState`, `UserNameTime`).
 - **Keep pure logic in `src/lib/`** (e.g. `schools.ts` validation, looking-for/interested-in whitelists) and ADD a Vitest test for it (e.g. `src/lib/schools.test.ts`) — the project has vitest; pure validators must be covered.
 - **Edge boundary:** never import `pg`/`bcrypt` into `auth.config.ts`/`middleware.ts`.
 - **Behavior intact:** don't break existing auth, feed filter, poke/like/follow/comment/wall.
