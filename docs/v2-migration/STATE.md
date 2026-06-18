@@ -28,7 +28,16 @@ _Last updated: 2026-06-18, before an Auth0 implementation run that was NOT start
 - For any NEW raw SQL: Prisma binds strings as `text`, so cast uuid comparisons (`$n::uuid`).
 
 ## What is NOT done (Auth0 track) — START HERE NEXT SESSION
-Nothing implemented. But the prerequisites are READY:
+Almost nothing implemented. ONE partial head-start exists:
+- **`prisma/schema.prisma` already contains the Auth0 columns** (committed as WIP
+  `5925683`): `auth0Sub String? @unique @map("auth0_sub")`, `onboardedAt DateTime?
+  @map("onboarded_at")`, and `username`/`passwordHash` relaxed to nullable.
+- BUT: **no Prisma migration was generated**, the columns are **NOT in the live DB**,
+  **no auth code is wired**, and **nothing was deployed**. The Auth0 agent must run
+  `prisma migrate dev --name auth0_columns` to materialize the columns (they already
+  match the schema, so it just emits the migration), then do all the auth wiring.
+
+Prerequisites are READY:
 - **Auth0 secrets already in Secret Manager (no trailing newline):**
   `mdjamal-auth0-domain` = `dev-afe77gumoeorof8u.us.auth0.com`,
   `mdjamal-auth0-client-id`, `mdjamal-auth0-client-secret`.
