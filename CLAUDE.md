@@ -79,7 +79,12 @@ applied without re-running DDL — demo data untouched. `CHECK` constraints (Pri
 them) are hand-appended as raw SQL inside `0_init/migration.sql`. Current tables:
 
 - **users** — `id, username, email, password_hash, bio, created_at` plus added columns:
-  `relationship_status, interests, courses, school, interested_in, looking_for, avatar (BYTEA), avatar_mime`
+  `relationship_status, interests, courses, school, interested_in, looking_for, avatar (BYTEA), avatar_mime, class_year`
+  plus Auth0 columns (`20260618000000_auth0_columns`): `auth0_sub (unique, nullable)` — the
+  OIDC join key — and `onboarded_at (nullable)` — gates the one-time `/onboarding` step.
+  `username` and `password_hash` are now **nullable** (an Auth0-provisioned row has no username
+  until onboarding and no bcrypt hash at all; the UNIQUE-on-username constraint stays, NULLs
+  are distinct in Postgres).
 - **posts** — `id, user_id→users, content (≤280), created_at`
 - **comments** — `id, post_id→posts, user_id→users, content (≤280), created_at`
 - **wall_posts** — `id, owner_id→users, author_id→users, content (≤280), created_at` (author posts on owner's wall)
@@ -101,6 +106,9 @@ These are **never in the repo**. Set in Secret Manager and wired to Cloud Run.
 | `DATABASE_URL` | `postgresql://user:pass@/dbname?host=/cloudsql/...` (Unix socket) |
 | `NEXTAUTH_SECRET` | Random 32-byte secret |
 | `NEXTAUTH_URL` | Full public HTTPS URL of the Cloud Run service |
+| `AUTH0_CLIENT_ID` | Auth0 Regular Web App client id (`mdjamal-auth0-client-id`) |
+| `AUTH0_CLIENT_SECRET` | Auth0 client secret (`mdjamal-auth0-client-secret`) — **no trailing newline** or OIDC token exchange fails `invalid_client` |
+| `AUTH0_ISSUER` | `https://<tenant>.<region>.auth0.com` (`mdjamal-auth0-issuer`) — the NextAuth Auth0 `issuer` |
 
 ## Gotchas (learned the hard way)
 
@@ -108,7 +116,8 @@ These are **never in the repo**. Set in Secret Manager and wired to Cloud Run.
 - **`prisma generate` must run before `tsc`/`next build`.** CI runs `npx tsc --noEmit` right after `npm ci`; without a generated client `@prisma/client` exports no model types and `tsc` fails. The `"postinstall": "prisma generate"` script (runs at the end of every `npm ci`) and `"build": "prisma generate && next build"` cover this. `postinstall` requires `prisma/schema.prisma` to exist — keep it committed.
 - **Prisma engine on Alpine/musl.** The runtime image is `node:20-alpine` (musl + OpenSSL 3), so `schema.prisma` sets `binaryTargets = ["native", "linux-musl-openssl-3.0.x"]`. The standalone Next bundle can drop the native engine binary, so `next.config.mjs` adds `experimental.outputFileTracingIncludes` for `node_modules/.prisma/client/*` AND the Dockerfile runner stage `COPY`s `node_modules/.prisma` + `@prisma/client`. If you see "Query engine binary for current platform could not be found" at runtime, this is why.
 - **Schema is applied by the `mdjamal-migrate` Cloud Run Job, not a local `psql` or `/api/migrate`.** Cloud SQL is private-IP only (org policy blocks public IP), unreachable from a laptop. The Job runs `prisma migrate deploy` inside the VPC with the Cloud SQL instance attached (`--add-cloudsql-instances`) and its runtime SA holding `roles/cloudsql.client`. `migrate deploy` is idempotent (skips applied migrations) and takes a Postgres advisory lock for the duration. Run it post-deploy: `gcloud run jobs execute mdjamal-migrate --wait --region=us-central1 --project=sml-interview-sandbox`. `/api/seed` is still an HTTP token-guarded route (now using Prisma).
-- **NextAuth v5 needs a split config.** `auth.config.ts` is edge-safe (callbacks, session strategy, `authorized` route-protection logic) and is the ONLY thing `middleware.ts` imports — it must never pull in Prisma (`@prisma/client`) or `bcrypt`, which can't run on the edge runtime. The Prisma/bcrypt-backed `authorize` lives only in `auth.ts`. If the middleware bundle balloons or build complains about Node APIs at the edge, something Node-only leaked into `auth.config.ts`.
+- **NextAuth v5 needs a split config.** `auth.config.ts` is edge-safe (callbacks, session strategy, `authorized` route-protection logic) and is the ONLY thing `middleware.ts` imports — it must never pull in Prisma (`@prisma/client`) or `bcrypt`, which can't run on the edge runtime. The Prisma/bcrypt-backed `authorize`, the **Auth0 OIDC provider**, and the DB-touching **Node `jwt` callback** live only in `auth.ts`. If the middleware bundle balloons or build complains about Node APIs at the edge, something Node-only leaked into `auth.config.ts`.
+- **Two auth providers, one identity.** `auth.ts` runs **Auth0 (OIDC)** + the legacy **Credentials (bcrypt)** provider; both resolve to the same `users.id`. The Node `jwt` callback (a) race-safe `upsert`s by `auth0_sub` on first Auth0 login, (b) does `email_verified`-gated link-by-email adoption of a legacy row, (c) **overwrites `token.name` with the DB `username`** (NOT the OIDC display name — every ownership/`revalidatePath` check depends on `session.user.name === username`), and (d) sets `token.onboarded`. The edge `authorized` callback routes logged-in-but-not-onboarded users to `/onboarding` using only `token.onboarded` (no DB). Onboarding is OUTSIDE `(main)` with a scoped `SessionProvider`; its action returns `{ok:true}` (not a redirect) so the client calls `useSession().update()` to refresh the JWT before navigating — otherwise the stale `onboarded=false` loops back. New Auth0 secrets: `AUTH0_CLIENT_ID/SECRET/ISSUER` (issuer = `https://<domain>`, no trailing newline); wire via `--update-secrets`, grant the runtime SA `secretAccessor`.
 - **`authorize()` returns `null` on failure, never throws.** Throwing yields a 500 instead of a graceful "invalid credentials". Login form calls `signIn(..., { redirect: false })` and handles the error in the UI.
 - **`redirect()` must live outside try/catch.** Next's `redirect()` works by throwing — a surrounding catch swallows it. Same applies to server actions (see register action).
 - **`secret`/`trustHost` set explicitly in config.** v5 defaults to `AUTH_SECRET`, but our Secret Manager value mounts as `NEXTAUTH_SECRET`, so `auth.config.ts` passes `secret: process.env.NEXTAUTH_SECRET` and `trustHost: true` (required behind Cloud Run's proxy).
