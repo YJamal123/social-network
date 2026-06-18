@@ -14,21 +14,43 @@ import { Avatar } from "@/components/Avatar"
 import { EmptyState } from "@/components/EmptyState"
 import { UserNameTime } from "@/components/UserNameTime"
 import { getWallPosts } from "@/app/(main)/profile/actions"
-import { getFriendshipState } from "@/app/(main)/friends/actions"
+import { getFriendshipState, getFriends } from "@/app/(main)/friends/actions"
 import { buttonClass } from "@/lib/ui"
 import type { PostWithAuthor, ProfileUser } from "@/lib/types"
 
-async function getProfile(username: string): Promise<ProfileUser | null> {
+async function getProfile(
+  username: string,
+  viewerId: string | null
+): Promise<ProfileUser | null> {
   const result = await query<ProfileUser>(
     `SELECT u.id, u.username, u.bio, u.relationship_status, u.interests,
             u.courses, u.school, u.interested_in, u.looking_for, u.class_year,
             u.created_at,
             (SELECT COUNT(*)::int FROM posts p WHERE p.user_id = u.id) AS post_count,
             (SELECT COUNT(*)::int FROM follows f WHERE f.following_id = u.id) AS follower_count,
-            (SELECT COUNT(*)::int FROM follows f WHERE f.follower_id = u.id) AS following_count
+            (SELECT COUNT(*)::int FROM follows f WHERE f.follower_id = u.id) AS following_count,
+            (SELECT COUNT(*)::int FROM friendships fr
+              WHERE fr.confirmed = true
+                AND (fr.requester_id = u.id OR fr.addressee_id = u.id)) AS friend_count,
+            -- Mutual friends: confirmed friends shared by the viewer ($2) and
+            -- this profile (u.id). Empty when logged out or viewing own profile.
+            (SELECT COUNT(*)::int FROM (
+               SELECT CASE WHEN fr.requester_id = u.id
+                           THEN fr.addressee_id ELSE fr.requester_id END AS fid
+                 FROM friendships fr
+                WHERE fr.confirmed = true
+                  AND (fr.requester_id = u.id OR fr.addressee_id = u.id)
+               INTERSECT
+               SELECT CASE WHEN fv.requester_id = $2
+                           THEN fv.addressee_id ELSE fv.requester_id END AS fid
+                 FROM friendships fv
+                WHERE fv.confirmed = true
+                  AND $2 IS NOT NULL AND $2 <> u.id
+                  AND (fv.requester_id = $2 OR fv.addressee_id = $2)
+             ) mutual) AS mutual_friend_count
        FROM users u
       WHERE u.username = $1`,
-    [username]
+    [username, viewerId]
   )
   return result.rows[0] ?? null
 }
@@ -109,10 +131,10 @@ export default async function ProfilePage({
 }: {
   params: { username: string }
 }) {
-  const profile = await getProfile(params.username)
+  const session = await auth()
+  const profile = await getProfile(params.username, session?.user?.id ?? null)
   if (!profile) notFound()
 
-  const session = await auth()
   const isOwnProfile = session?.user?.id === profile.id
   const following =
     session?.user?.id && !isOwnProfile
@@ -133,6 +155,7 @@ export default async function ProfilePage({
       : "none"
   const posts = await getUserPosts(profile.id, session?.user?.id ?? null)
   const wallPosts = await getWallPosts(profile.id)
+  const friends = await getFriends(profile.id)
 
   const joined = new Date(profile.created_at).toLocaleDateString(undefined, {
     month: "long",
@@ -198,6 +221,12 @@ export default async function ProfilePage({
                   Message
                 </Link>
               </div>
+              {profile.mutual_friend_count > 0 && (
+                <p className="text-body-sm text-secondary">
+                  {profile.mutual_friend_count} mutual{" "}
+                  {profile.mutual_friend_count === 1 ? "friend" : "friends"}
+                </p>
+              )}
             </div>
           </Panel>
         )}
@@ -214,6 +243,8 @@ export default async function ProfilePage({
             <div className="text-body-sm text-secondary">Joined {joined}</div>
           </div>
           <div className="flex shrink-0 items-center gap-4 text-center">
+            <Stat n={profile.friend_count} label="friends" />
+            <div className="h-8 border-l border-outline-variant" />
             <Stat n={profile.follower_count} label="followers" />
             <div className="h-8 border-l border-outline-variant" />
             <Stat n={profile.following_count} label="following" />
@@ -293,6 +324,41 @@ export default async function ProfilePage({
               </dl>
             )}
           </div>
+        </Panel>
+
+        {/* Friends */}
+        <Panel
+          title="Friends"
+          bodyClassName="p-4"
+          action={
+            friends.length > 0 ? (
+              <Link
+                href="/friends"
+                className="bracket-link text-action-link text-primary hover:underline"
+              >
+                see all
+              </Link>
+            ) : undefined
+          }
+        >
+          {friends.length === 0 ? (
+            <EmptyState icon="group" message="No friends yet." />
+          ) : (
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+              {friends.slice(0, 12).map((f) => (
+                <Link
+                  key={f.user_id}
+                  href={`/profile/${f.username}`}
+                  className="flex flex-col items-center gap-1 rounded p-2 text-center transition-colors hover:bg-surface-container"
+                >
+                  <Avatar userId={f.user_id} username={f.username} size="sm" />
+                  <span className="w-full truncate text-body-sm text-primary">
+                    {f.username}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </Panel>
 
         {/* The Wall */}

@@ -197,4 +197,8 @@ export interface ProfileUser {
   post_count: number
   follower_count: number
   following_count: number
+  friend_count: number
+  // Confirmed friends shared by the viewer and this profile. 0 on own profile
+  // or when logged out.
+  mutual_friend_count: number
 }

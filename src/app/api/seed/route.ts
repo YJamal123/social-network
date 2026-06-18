@@ -18,6 +18,7 @@ interface DemoUser {
   username: string
   bio: string
   school: string
+  classYear?: number
   relationshipStatus?: string
   interests?: string
   courses?: string
@@ -33,6 +34,7 @@ const USERS: DemoUser[] = [
     username: "thefacebook_tom",
     bio: "CS junior. Building things in my dorm. Poke me.",
     school: "Cornell",
+    classYear: 2006,
     relationshipStatus: "Single",
     interests: "Coding, late-night pizza, growth hacking",
     courses: "CS161, CS50, Linear Algebra",
@@ -43,6 +45,7 @@ const USERS: DemoUser[] = [
     username: "harvardhannah",
     bio: "Pre-med, perpetually in Lamont Library. Coffee is a food group.",
     school: "Harvard",
+    classYear: 2005,
     relationshipStatus: "In a relationship",
     interests: "Organic chemistry, running, true-crime podcasts",
     courses: "Orgo II, Biostatistics, Cell Biology",
@@ -53,6 +56,7 @@ const USERS: DemoUser[] = [
     username: "djmarcus",
     bio: "Spinning records at the eating club this Friday. RSVP or regret it.",
     school: "Princeton",
+    classYear: 2007,
     relationshipStatus: "It's complicated",
     interests: "Vinyl, mixtapes, throwing parties",
     courses: "Music Theory, Sociology 101",
@@ -63,6 +67,7 @@ const USERS: DemoUser[] = [
     username: "priya_codes",
     bio: "EE/CS double major. Soldering > sleeping.",
     school: "Cornell",
+    classYear: 2006,
     relationshipStatus: "Single",
     interests: "Circuits, robotics, mechanical keyboards",
     courses: "Circuits, Signals & Systems, CS161",
@@ -73,6 +78,7 @@ const USERS: DemoUser[] = [
     username: "skater_dave",
     bio: "Econ major who would rather be at the skatepark.",
     school: "Brown",
+    classYear: 2008,
     relationshipStatus: "Single",
     interests: "Skating, sneakers, day-trading beer money",
     courses: "Intro Econ, Statistics, Game Theory",
@@ -83,6 +89,7 @@ const USERS: DemoUser[] = [
     username: "artsy_lena",
     bio: "Visual arts. I will draw you for ramen money.",
     school: "Yale",
+    classYear: 2005,
     relationshipStatus: "In a relationship",
     interests: "Charcoal portraits, gallery hopping, ramen",
     courses: "Studio Art, Art History, Intro Econ",
@@ -93,6 +100,7 @@ const USERS: DemoUser[] = [
     username: "coachrandy",
     bio: "Intramural soccer captain. Practice is NOT optional.",
     school: "Penn",
+    classYear: 2004,
     relationshipStatus: "In a relationship",
     interests: "Soccer, protein shakes, motivational speeches",
     courses: "Sports Management, Marketing, Nutrition",
@@ -103,6 +111,7 @@ const USERS: DemoUser[] = [
     username: "bookish_mei",
     bio: "English lit. Currently 4 novels deep, 0 essays written.",
     school: "Columbia",
+    classYear: 2007,
     relationshipStatus: "It's complicated",
     interests: "Victorian novels, tea, procrastination",
     courses: "Modernist Lit, Creative Writing, Philosophy 101",
@@ -113,6 +122,7 @@ const USERS: DemoUser[] = [
     username: "gamer_greg",
     bio: "Halo LAN party in my common room. BYO controller.",
     school: "Dartmouth",
+    classYear: 2008,
     relationshipStatus: "It's complicated",
     interests: "Halo, mechanical keyboards, energy drinks",
     courses: "CS101, Discrete Math, Game Design",
@@ -123,6 +133,7 @@ const USERS: DemoUser[] = [
     username: "rower_chad",
     bio: "Heavyweight crew, 5am erg sessions, econ on the side.",
     school: "Penn",
+    classYear: 2006,
     relationshipStatus: "Single",
     interests: "Rowing, ergs, brunch recovery",
     courses: "Intro Econ, Accounting, Statistics",
@@ -133,6 +144,7 @@ const USERS: DemoUser[] = [
     username: "ivy_isabel",
     bio: "Woodrow Wilson School. Debate team captain. Future senator (allegedly).",
     school: "Princeton",
+    classYear: 2009,
     relationshipStatus: "It's complicated",
     interests: "Policy debate, model UN, op-eds",
     courses: "Politics 101, Microeconomics, Constitutional Law",
@@ -143,6 +155,7 @@ const USERS: DemoUser[] = [
     username: "photog_nate",
     bio: "Photo editor at the Spectator. I shoot the city at 3am.",
     school: "Columbia",
+    classYear: 2007,
     relationshipStatus: "Single",
     interests: "Film photography, darkrooms, vinyl",
     courses: "Photojournalism, Media Studies, Art History",
@@ -153,6 +166,7 @@ const USERS: DemoUser[] = [
     username: "a_capella_amy",
     bio: "Whiffenpoofs reject, still singing anyway. Catch me on Old Campus.",
     school: "Yale",
+    classYear: 2010,
     relationshipStatus: "In a relationship",
     interests: "A cappella, sheet music, open mics",
     courses: "Music Theory, Vocal Performance, Psych 101",
@@ -163,6 +177,7 @@ const USERS: DemoUser[] = [
     username: "frat_brett",
     bio: "House social chair. The basement is open. Pong, anyone?",
     school: "Dartmouth",
+    classYear: 2004,
     relationshipStatus: "Single",
     interests: "Pong, tailgates, ski trips",
     courses: "Government, Econ, Earth Sciences",
@@ -173,6 +188,7 @@ const USERS: DemoUser[] = [
     username: "thesis_tariq",
     bio: "Open curriculum means I take whatever I want. Currently: everything.",
     school: "Brown",
+    classYear: 2009,
     relationshipStatus: "It's complicated",
     interests: "Philosophy, ultimate frisbee, espresso",
     courses: "Philosophy of Mind, CS15, Linguistics",
@@ -183,6 +199,7 @@ const USERS: DemoUser[] = [
     username: "premed_paula",
     bio: "Bio concentrator. If you see me outside the science center, something is wrong.",
     school: "Harvard",
+    classYear: 2006,
     relationshipStatus: "Single",
     interests: "MCAT prep, hospital volunteering, yoga",
     courses: "Genetics, Orgo II, Biochemistry",
@@ -193,6 +210,7 @@ const USERS: DemoUser[] = [
     username: "quad_quinn",
     bio: "Hotel school. I will judge your room-service order. Ithaca is gorges.",
     school: "Cornell",
+    classYear: 2010,
     relationshipStatus: "Single",
     interests: "Hospitality, latte art, hiking the gorges",
     courses: "Hospitality Management, Marketing, Wines",
@@ -532,6 +550,48 @@ const RELATIONSHIPS: [number, number, string, boolean][] = [
   [10, 14, "It's complicated", false], // ivy_isabel -> thesis_tariq (pending)
 ]
 
+// Friendships as [requesterIdx, addresseeIdx, confirmed]. ONE row per pair
+// (symmetric — confirmed=true is an edge in both directions). A dense confirmed
+// web so friend counts + mutual-friends are non-trivial: e.g. user 0 and user 3
+// are both friends with 1, 2 and 8 (shared mutuals). Two PENDING rows aimed at
+// user 0 (thefacebook_tom) light up the header badge + the /friends Confirm flow.
+const FRIENDSHIPS: [number, number, boolean][] = [
+  // user 0's confirmed friends
+  [0, 1, true],
+  [0, 2, true],
+  [0, 8, true],
+  [0, 9, true],
+  // user 3 shares mutuals 1, 2, 8 with user 0
+  [3, 1, true],
+  [3, 2, true],
+  [3, 8, true],
+  [0, 3, true], // 0 and 3 are also directly friends
+  // wider web with overlaps
+  [1, 5, true],
+  [1, 7, true],
+  [2, 4, true],
+  [2, 8, true],
+  [4, 6, true],
+  [5, 7, true],
+  [6, 9, true],
+  [7, 11, true],
+  [8, 13, true],
+  [10, 14, true],
+  [11, 16, true],
+  [12, 15, true],
+  [12, 16, true],
+  [15, 9, true],
+  [4, 14, true],
+  [5, 11, true],
+  // pending INCOMING to user 0 — these surface in user 0's /friends Confirm flow
+  // and the header badge (addressee is 0).
+  [4, 0, false], // skater_dave -> thefacebook_tom (pending)
+  [16, 0, false], // quad_quinn -> thefacebook_tom (pending)
+  // a couple of other pending requests elsewhere (not aimed at user 0)
+  [10, 2, false],
+  [13, 5, false],
+]
+
 // Messages as [senderIdx, recipientIdx, content, read]. Private 1:1 DMs. A few
 // left read=false (aimed at user 0, thefacebook_tom) so the unread badge shows.
 const MESSAGES: [number, number, string, boolean][] = [
@@ -605,14 +665,15 @@ export async function POST(request: Request) {
     const userIds: string[] = []
     for (const u of USERS) {
       const res = await client.query<{ id: string }>(
-        `INSERT INTO users (username, email, password_hash, bio, school, relationship_status, interests, courses, interested_in, looking_for)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+        `INSERT INTO users (username, email, password_hash, bio, school, class_year, relationship_status, interests, courses, interested_in, looking_for)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
         [
           u.username,
           `${u.username}@demo.sml`,
           passwordHash,
           u.bio,
           u.school,
+          u.classYear ?? null,
           u.relationshipStatus ?? null,
           u.interests ?? null,
           u.courses ?? null,
@@ -730,6 +791,20 @@ export async function POST(request: Request) {
       relationshipCount++
     }
 
+    // Friendships (symmetric; a dense confirmed web + a couple pending incoming
+    // to user 0). Self-pairs are impossible here (table CHECK enforces it too).
+    let friendshipCount = 0
+    for (const [requesterIdx, addresseeIdx, confirmed] of FRIENDSHIPS) {
+      if (requesterIdx === addresseeIdx) continue // guard: never self-friend
+      await client.query(
+        `INSERT INTO friendships (requester_id, addressee_id, confirmed) VALUES ($1, $2, $3)
+         ON CONFLICT (requester_id, addressee_id) DO UPDATE
+           SET confirmed = EXCLUDED.confirmed, created_at = now()`,
+        [userIds[requesterIdx], userIds[addresseeIdx], confirmed]
+      )
+      friendshipCount++
+    }
+
     // Messages (private 1:1 DMs; some unread so the header indicator shows).
     // Spread created_at over recent days so threads sort believably.
     let messageCount = 0
@@ -759,6 +834,7 @@ export async function POST(request: Request) {
         pokes: pokeCount,
         taunts: tauntCount,
         relationships: relationshipCount,
+        friendships: friendshipCount,
         messages: messageCount,
       },
     })
