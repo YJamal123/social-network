@@ -130,10 +130,16 @@ jobs:
         run: |
           IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT }}/${{ vars.GCP_AR_REPO }}/${{ vars.CLOUD_RUN_SERVICE }}:${{ github.sha }}"
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          # --suppress-logs: the deploy SA intentionally lacks project
+          # Viewer/Owner, so gcloud can't STREAM build logs to stdout and would
+          # exit 1 even on a successful build. Suppressing the stream still waits
+          # for the build and fails the job if the build itself fails; the full
+          # logs remain in the Cloud Build console (URL printed above).
           gcloud builds submit \
             --project="${{ vars.GCP_PROJECT }}" \
             --region="${{ vars.GCP_REGION }}" \
             --tag="$IMAGE" \
+            --suppress-logs \
             .
 
       - name: Deploy to Cloud Run
