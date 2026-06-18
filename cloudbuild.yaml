@@ -1,0 +1,37 @@
+# Cloud Build config that builds BOTH images this project needs from the one
+# multi-stage Dockerfile, then pushes them:
+#   - the lean app image (runner stage)  -> Cloud Run service mdjamal-app
+#   - the migrate image  (migrate stage) -> Cloud Run job     mdjamal-migrate
+#
+# `gcloud builds submit --tag` can only build the default final stage, so when a
+# second target (the migrate stage) is needed we submit with
+# `--config=cloudbuild.yaml` and pass _IMAGE / _MIGRATE_IMAGE substitutions.
+#
+# Usage (from the deploy workflow or by hand):
+#   gcloud builds submit --config=cloudbuild.yaml \
+#     --substitutions=_IMAGE=<app-image>,_MIGRATE_IMAGE=<migrate-image> \
+#     --project=sml-interview-sandbox --region=us-central1 .
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    id: build-app
+    args:
+      - build
+      - --target=runner
+      - --tag=${_IMAGE}
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    id: build-migrate
+    args:
+      - build
+      - --target=migrate
+      - --tag=${_MIGRATE_IMAGE}
+      - .
+
+images:
+  - ${_IMAGE}
+  - ${_MIGRATE_IMAGE}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
