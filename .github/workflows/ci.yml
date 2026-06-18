@@ -1,0 +1,56 @@
+# CI — typecheck, unit tests (Vitest), and a production Next.js build.
+#
+# Runs on every pull request and on direct pushes to main. No GCP credentials
+# and no database are involved: the Vitest suite is pure-logic only (see
+# CLAUDE.md "Testing & the QA Gate"), and `next build` works without a live DB
+# because src/lib/db.ts lazy-inits the pg Pool on first query() — not at import.
+# Verified locally: `next build` exits 0 with DATABASE_URL/NEXTAUTH_* unset.
+#
+# This is complementary to the local .git/hooks/pre-push QA gate, which still
+# runs the qa-runner subagent before any push from a dev's clone.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Matches Dockerfile (node:20-alpine) and @types/node ^20.
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit tests (Vitest)
+        run: npm test
+
+      - name: Build (Next.js)
+        # Safe without a DB: the pg Pool is lazy-initialised, so no DATABASE_URL
+        # is needed at build time. NEXT_TELEMETRY_DISABLED mirrors the Dockerfile.
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build

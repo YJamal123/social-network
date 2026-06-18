@@ -1,0 +1,160 @@
+# CD — build on Cloud Build, deploy to Cloud Run, then apply the DB migration.
+#
+# Trigger: push to main. The deploy job needs CI (typecheck + tests + build) to
+# pass first — see `needs: ci` below, which reuses the same job as ci.yml via a
+# duplicated lightweight gate so a red build never ships.
+#
+# Auth uses Workload Identity Federation (keyless) — NOT a JSON service-account
+# key. This repo is PUBLIC and CLAUDE.md forbids SA key files in the repo, so we
+# never store a long-lived credential anywhere.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# REQUIRED GitHub configuration (Settings → Secrets and variables → Actions)
+#
+# Repository VARIABLES (non-secret, "Variables" tab):
+#   GCP_PROJECT          sml-interview-sandbox
+#   GCP_REGION           us-central1
+#   GCP_AR_REPO          mdjamal-registry          (Artifact Registry repo)
+#   CLOUD_RUN_SERVICE    mdjamal-app
+#   GCP_SA_EMAIL         github-deployer@sml-interview-sandbox.iam.gserviceaccount.com
+#   GCP_WIF_PROVIDER     projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+#
+# Repository SECRETS ("Secrets" tab):
+#   MIGRATE_TOKEN        value of NEXTAUTH_SECRET *including its trailing newline*
+#                        (see MEMORY: the secret is 44 base64 chars + "\n"; the
+#                        migrate token must include + URL-encode the newline or
+#                        the route returns 401). Store the raw secret here; the
+#                        workflow URL-encodes it before calling /api/migrate.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# ONE-TIME WIF SETUP (run once by a project owner; replace PROJECT_NUMBER and the
+# GitHub "owner/repo"). These create the pool, a deploy SA, and the bindings.
+#
+#   PROJECT=sml-interview-sandbox
+#   PROJECT_NUMBER=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
+#   REPO=<github-owner>/<github-repo>          # e.g. mdjamal/social-network
+#
+#   # 1. Deploy service account
+#   gcloud iam service-accounts create github-deployer \
+#     --project="$PROJECT" --display-name="GitHub Actions deployer"
+#   SA=github-deployer@$PROJECT.iam.gserviceaccount.com
+#
+#   # 2. Roles the deploy needs (Cloud Build, Cloud Run, Artifact Registry,
+#   #    plus actAs on the runtime SA used by the Cloud Run service).
+#   for ROLE in roles/run.admin roles/cloudbuild.builds.editor \
+#               roles/artifactregistry.writer roles/storage.admin \
+#               roles/iam.serviceAccountUser; do
+#     gcloud projects add-iam-policy-binding "$PROJECT" \
+#       --member="serviceAccount:$SA" --role="$ROLE"
+#   done
+#
+#   # 3. Workload Identity pool + GitHub OIDC provider
+#   gcloud iam workload-identity-pools create github-pool \
+#     --project="$PROJECT" --location=global --display-name="GitHub pool"
+#
+#   gcloud iam workload-identity-pools providers create-oidc github-provider \
+#     --project="$PROJECT" --location=global \
+#     --workload-identity-pool=github-pool \
+#     --display-name="GitHub provider" \
+#     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
+#     --attribute-condition="assertion.repository=='$REPO'" \
+#     --issuer-uri="https://token.actions.githubusercontent.com"
+#
+#   # 4. Let this repo impersonate the deploy SA via the pool
+#   gcloud iam service-accounts add-iam-policy-binding "$SA" \
+#     --project="$PROJECT" --role=roles/iam.workloadIdentityUser \
+#     --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/attribute.repository/$REPO"
+#
+#   # 5. GCP_WIF_PROVIDER value to paste into GitHub:
+#   echo "projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+#
+# The Cloud Run service still reads DATABASE_URL / NEXTAUTH_SECRET / NEXTAUTH_URL
+# from Secret Manager (wired on the service); this workflow does not set them.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  # Never run two deploys at once; let an in-flight deploy finish.
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # required for Workload Identity Federation
+
+jobs:
+  # Re-run the CI gate so a broken main can never deploy. Mirrors ci.yml.
+  ci:
+    name: CI gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  deploy:
+    name: Build & deploy to Cloud Run
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (WIF, keyless)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build & push image (Cloud Build)
+        run: |
+          IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT }}/${{ vars.GCP_AR_REPO }}/${{ vars.CLOUD_RUN_SERVICE }}:${{ github.sha }}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          gcloud builds submit \
+            --project="${{ vars.GCP_PROJECT }}" \
+            --region="${{ vars.GCP_REGION }}" \
+            --tag="$IMAGE" \
+            .
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "${{ vars.CLOUD_RUN_SERVICE }}" \
+            --project="${{ vars.GCP_PROJECT }}" \
+            --region="${{ vars.GCP_REGION }}" \
+            --image="$IMAGE" \
+            --quiet
+          URL=$(gcloud run services describe "${{ vars.CLOUD_RUN_SERVICE }}" \
+            --project="${{ vars.GCP_PROJECT }}" \
+            --region="${{ vars.GCP_REGION }}" \
+            --format='value(status.url)')
+          echo "SERVICE_URL=$URL" >> "$GITHUB_ENV"
+
+      - name: Apply DB migration (idempotent)
+        env:
+          MIGRATE_TOKEN: ${{ secrets.MIGRATE_TOKEN }}
+        run: |
+          # The migrate route compares the token to NEXTAUTH_SECRET exactly,
+          # including its trailing newline — so we URL-encode the raw secret
+          # (newline -> %0A) rather than passing it bare. --fail makes a 401/500
+          # fail the job.
+          ENCODED=$(printf '%s' "$MIGRATE_TOKEN" | jq -sRr @uri)
+          curl --fail --silent --show-error -X POST \
+            "${SERVICE_URL}/api/migrate?token=${ENCODED}"
