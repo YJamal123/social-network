@@ -21,12 +21,14 @@
 #
 # Repository SECRETS ("Secrets" tab):
 #   MIGRATE_TOKEN        the NEXTAUTH_SECRET value — store the CLEAN 44-char
-#                        secret WITHOUT a trailing newline. The running Cloud Run
-#                        service's NEXTAUTH_SECRET ends in a "\n" (its secret is
-#                        pinned to an older version that had one; verified live:
-#                        clean token -> 401, token+"\n" -> 200). The migrate step
-#                        below strips any stray newline and appends exactly one
-#                        before URL-encoding, so a clean paste matches the route.
+#                        secret WITHOUT a trailing newline. The Secret Manager
+#                        value itself ends in a "\n" (it was generated with
+#                        `openssl rand -base64 32`, which appends one), so the
+#                        service's NEXTAUTH_SECRET — and thus the token the
+#                        migrate route expects — includes that newline (verified
+#                        live: clean token -> 401, token+"\n" -> 200). The migrate
+#                        step below strips any stray newline and appends exactly
+#                        one before URL-encoding, so a clean paste still matches.
 #
 # ─────────────────────────────────────────────────────────────────────────────
 # ONE-TIME WIF SETUP (run once by a project owner; replace PROJECT_NUMBER and the
