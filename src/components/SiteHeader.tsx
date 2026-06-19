@@ -24,7 +24,10 @@ export async function SiteHeader() {
     <header className="sticky top-0 z-50 w-full border-b border-outline-variant bg-primary">
       <div className="mx-auto flex h-12 max-w-container-max items-center justify-between gap-4 px-gutter">
         <div className="flex items-center gap-6">
-          <Link href="/feed" className="text-masthead-logo text-on-primary">
+          <Link
+            href="/feed"
+            className="shrink-0 whitespace-nowrap text-masthead-logo text-on-primary"
+          >
             [ sml ]
           </Link>
           <nav className="hidden items-center gap-3 text-body-base text-on-primary md:flex">
