@@ -53,3 +53,7 @@ next-env.d.ts
 .claude/settings.local.json
 .claude/.qa-last-run.log
 .claude/worktrees/
+
+# Playwright MCP — transient screenshots / snapshots / console logs from walkthroughs
+.playwright-mcp/
+walkthrough-*.png
